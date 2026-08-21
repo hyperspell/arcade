@@ -1,0 +1,841 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bedrock Spaceteam — Arcade Shift</title>
+<style>
+  :root{
+    --space:#000;
+    --metal:#C9CCD1; --metal-hi:#DDE0E4; --metal-lo:#AEB2B9; --seam:#7E838C;
+    --ink:#121316;
+    --red:#C8281E; --red-hi:#E8564A; --red-lo:#7E1410;
+    --lime:#B9D40B; --hot:#F08A1D;
+    --white:#FFFFFF; --gray:#9BA0A8;
+    --label:'Arial Rounded MT Bold','Trebuchet MS','Segoe UI',Verdana,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  html,body{background:var(--space)!important;color:var(--white);margin:0;padding:0;}
+  body{font-family:var(--label);font-size:15px;line-height:1.45;}
+  *{box-sizing:border-box;}
+  .ship{max-width:1500px;margin:0 auto;padding:0 clamp(0px,1vw,20px) 50px;}
+  .frame{background:var(--space);border-radius:0 0 10px 10px;overflow:hidden;}
+  /* ---------- header meters (thin, black) ---------- */
+  .frame-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:8px 14px;background:#000;flex-wrap:wrap;}
+  .frame-head .id{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#5F656E;text-transform:uppercase;}
+  .meters{display:flex;gap:16px;font-size:13px;font-weight:700;color:var(--gray);align-items:center;}
+  .meters b{color:var(--white);}
+  .hullbar{width:96px;height:9px;border:1px solid #3A3F47;border-radius:2px;overflow:hidden;background:#15171B;display:inline-block;vertical-align:middle;}
+  .hullbar i{display:block;height:100%;background:var(--lime);}
+  .hullbar.low i{background:var(--red-hi);}
+  /* ---------- space viewport ---------- */
+  .viewport{position:relative;height:clamp(84px,12vh,130px);background:#000;overflow:hidden;}
+  .streaks,.streaks2{position:absolute;inset:0;background-repeat:repeat;}
+  .streaks{background-image:radial-gradient(ellipse 55px 1.6px at 50% 50%,rgba(170,195,255,.75) 0 55%,transparent 70%);
+    background-size:340px 97px;background-position:0 34px;animation:zoomA 1.2s linear infinite;}
+  .streaks2{background-image:radial-gradient(ellipse 90px 2px at 50% 50%,rgba(255,255,255,.85) 0 55%,transparent 70%);
+    background-size:520px 151px;background-position:170px 92px;animation:zoomB .8s linear infinite;opacity:.8;}
+  @keyframes zoomA{to{background-position-x:-340px;}}
+  @keyframes zoomB{to{background-position-x:-350px;}}
+  .vessel{position:absolute;left:50%;top:42%;translate:-50% -50%;width:74px;height:26px;}
+  .hullbody{position:absolute;inset:0;border-radius:12px 16px 16px 12px;
+    background:linear-gradient(180deg,#B8BCC2,#7C8188 55%,#585D64);box-shadow:0 0 10px rgba(150,180,255,.35);}
+  .hullbody::before{content:'';position:absolute;left:10px;top:7px;width:34px;height:9px;border-radius:5px;
+    background:linear-gradient(180deg,#2A3844,#101820);}
+  .hullbody::after{content:'';position:absolute;right:-11px;top:6px;width:14px;height:14px;border-radius:3px;
+    background:linear-gradient(90deg,#F0A02E,#F05A1D 70%,transparent);filter:blur(1px);}
+  .fire{position:absolute;inset:0;opacity:0;transition:opacity .5s;pointer-events:none;
+    background:radial-gradient(60% 120% at 50% 110%,rgba(240,120,20,.95),rgba(200,40,10,.6) 45%,transparent 75%);}
+  .fire.f1{opacity:.45;} .fire.f2{opacity:.9;}
+  .fireflick{animation:flick .18s steps(2,end) infinite;}
+  @keyframes flick{0%{transform:scaleY(1);}100%{transform:scaleY(1.06);}}
+  /* ---------- instruction display ---------- */
+  .deck{background:#000;padding:10px 18px 0;}
+  .wavetag{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:#6A707A;text-transform:uppercase;}
+  .cmd{font-size:clamp(21px,2.9vw,34px);font-weight:800;line-height:1.15;margin:6px 0 10px;color:var(--white);text-wrap:balance;}
+  .cmd .arrow{color:var(--white);font-size:.7em;vertical-align:middle;margin-right:10px;}
+  .toast{font-size:13.5px;font-weight:700;margin:0 0 8px;min-height:1.5em;color:var(--gray);}
+  .toast.bad{color:var(--red-hi);} .toast.good{color:var(--lime);}
+  .flashgood{animation:fg .45s;} .flashbad{animation:fb .5s;}
+  @keyframes fg{0%{background:rgba(185,212,11,.15);}100%{background:transparent;}}
+  @keyframes fb{0%{background:rgba(240,85,77,.25);}100%{background:transparent;}}
+  /* ---------- timer strip ---------- */
+  .timerbar{height:13px;background:#0B0C0E;overflow:hidden;}
+  .timerfill{height:100%;width:100%;background:
+    repeating-linear-gradient(115deg,rgba(0,0,0,.14) 0 7px,transparent 7px 14px),var(--lime);}
+  .timerfill.hot{background:
+    repeating-linear-gradient(115deg,rgba(0,0,0,.14) 0 7px,transparent 7px 14px),var(--hot);}
+  /* ---------- silver console ---------- */
+  .console{position:relative;background:var(--metal);padding:6px;
+    background-image:radial-gradient(circle 1px at 3px 3px,#9DA2AA 0 .8px,transparent 1.4px);
+    background-size:7px 7px;}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:5px;}
+  .cell{position:relative;background:linear-gradient(180deg,var(--metal-hi),var(--metal) 40%,var(--metal-lo));
+    background-image:
+      radial-gradient(circle 2.2px at 7px 7px,#6E737C 0 1.1px,#E8EBEE 1.6px,transparent 2.4px),
+      radial-gradient(circle 2.2px at calc(100% - 7px) 7px,#6E737C 0 1.1px,#E8EBEE 1.6px,transparent 2.4px),
+      radial-gradient(circle 2.2px at 7px calc(100% - 7px),#6E737C 0 1.1px,#E8EBEE 1.6px,transparent 2.4px),
+      radial-gradient(circle 2.2px at calc(100% - 7px) calc(100% - 7px),#6E737C 0 1.1px,#E8EBEE 1.6px,transparent 2.4px),
+      radial-gradient(circle 1px at 3px 3px,#B4B8BF 0 .7px,transparent 1.3px),
+      linear-gradient(180deg,var(--metal-hi),var(--metal) 40%,var(--metal-lo));
+    background-size:auto,auto,auto,auto,6px 6px,auto;
+    border:1px solid var(--seam);border-radius:4px;
+    box-shadow:inset 0 1px 0 #F2F4F6, inset 0 -2px 3px rgba(0,0,0,.22);
+    padding:8px 6px 10px;min-height:118px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+    -webkit-user-select:none;user-select:none;}
+  .cell:focus-visible{outline:3px solid var(--ink);outline-offset:-3px;}
+  .cell.span2{grid-column:span 2;}
+  .cell.rowwide{grid-column:1/-1;min-height:74px;}
+  .cell .lbl{font-size:clamp(13px,1.35vw,17px);font-weight:800;color:var(--ink);line-height:1.1;
+    text-align:center;letter-spacing:.005em;margin-bottom:4px;}
+  .cell .lbl.mono{font-family:var(--mono);font-size:clamp(10px,1vw,12px);font-weight:700;letter-spacing:.02em;overflow-wrap:break-word;}
+  .folded .lbl{color:transparent!important;text-shadow:0 0 9px rgba(18,19,22,.85);}
+  /* cracked plate + exposed circuit board */
+  .cracked{background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='110'><path d='M12 0 L22 26 L10 44 L30 62 L20 86 L34 110 M22 26 L44 34 M30 62 L52 56' stroke='%23222831' stroke-width='2.5' fill='none' opacity='.85'/></svg>") no-repeat 62% 0/55% 100%,
+      linear-gradient(180deg,var(--metal-hi),var(--metal) 40%,var(--metal-lo));}
+  .cracked::after{content:'';position:absolute;right:4px;bottom:4px;width:38%;height:34%;border-radius:3px;
+    background:
+      radial-gradient(circle 2px at 9px 9px,#D8C355 0 1.4px,transparent 2px),
+      radial-gradient(circle 2px at 24px 18px,#D8C355 0 1.4px,transparent 2px),
+      repeating-linear-gradient(0deg,transparent 0 5px,rgba(215,230,120,.25) 5px 6px),
+      repeating-linear-gradient(90deg,transparent 0 7px,rgba(215,230,120,.2) 7px 8px),
+      #1E4D22;
+    border:1px solid #123015;box-shadow:inset 0 0 6px #000;}
+  /* knob (dial) */
+  .dialwrap{position:relative;width:118px;height:104px;flex:none;}
+  .knob{position:absolute;left:50%;top:52%;translate:-50% -50%;width:58px;height:58px;border-radius:50%;
+    background:conic-gradient(#F0F2F4,#B9BDC4,#F0F2F4,#A6AAB1,#EDEFF2,#B9BDC4,#F0F2F4);
+    border:2px solid #6E737C;box-shadow:0 3px 5px rgba(0,0,0,.35), inset 0 2px 3px #fff;}
+  .knob::after{content:'';position:absolute;left:50%;top:3px;translate:-50%;width:5px;height:16px;border-radius:3px;
+    background:#22262C;}
+  .knob-el{transition:rotate .12s;}
+  .dialnum{position:absolute;font-size:12px;font-weight:800;color:var(--ink);translate:-50% -50%;white-space:nowrap;}
+  /* toggle switch */
+  .swbase{width:34px;height:34px;border-radius:50%;flex:none;margin-top:12px;position:relative;
+    background:radial-gradient(circle at 40% 35%,#E5E8EB,#9FA4AB 70%,#7E838C);
+    border:2px solid #6E737C;box-shadow:inset 0 1px 2px #fff,0 2px 3px rgba(0,0,0,.3);}
+  .swlever{position:absolute;left:50%;top:50%;width:9px;height:30px;border-radius:5px 5px 3px 3px;
+    background:linear-gradient(180deg,#F2F4F6,#9FA4AB);border:1px solid #6E737C;
+    transform-origin:50% 88%;translate:-50% -82%;transition:rotate .1s;box-shadow:0 1px 2px rgba(0,0,0,.4);}
+  .sw-on .swlever{rotate:0deg;} .sw-off .swlever{rotate:145deg;}
+  .swstate{font-size:11px;font-weight:800;color:var(--ink);margin-top:10px;}
+  /* red quilted button */
+  .redbtn{width:64px;height:64px;flex:none;border-radius:7px;margin-top:6px;position:relative;
+    background:
+      repeating-linear-gradient(45deg,rgba(0,0,0,.22) 0 2px,transparent 2px 11px),
+      repeating-linear-gradient(-45deg,rgba(0,0,0,.22) 0 2px,transparent 2px 11px),
+      radial-gradient(circle at 50% 40%,var(--red-hi),var(--red) 55%,var(--red-lo));
+    border:2px solid #4A0C08;box-shadow:0 3px 5px rgba(0,0,0,.4), inset 0 2px 4px rgba(255,255,255,.3);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:800;color:var(--ink);}
+  .cell:active .redbtn{transform:translateY(2px);box-shadow:0 1px 2px rgba(0,0,0,.4);}
+  /* wide red bar (CLEAN-style) — the hardcoded button */
+  .redbar{width:96%;padding:13px 8px;border-radius:9px;margin-top:2px;text-align:center;
+    background:
+      repeating-linear-gradient(45deg,rgba(0,0,0,.18) 0 2px,transparent 2px 12px),
+      repeating-linear-gradient(-45deg,rgba(0,0,0,.18) 0 2px,transparent 2px 12px),
+      radial-gradient(circle at 50% 30%,var(--red-hi),var(--red) 60%,var(--red-lo));
+    border:2px solid #4A0C08;box-shadow:0 3px 6px rgba(0,0,0,.4), inset 0 2px 4px rgba(255,255,255,.3);
+    color:var(--white);font-weight:800;font-size:clamp(15px,1.6vw,19px);letter-spacing:.04em;
+    text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .cell:active .redbar{transform:translateY(2px);}
+  /* sliders */
+  .hsl{width:104px;flex:none;margin-top:8px;}
+  .hslnums{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--ink);padding:0 2px;}
+  .hsltrack{position:relative;height:6px;background:#1A1C20;border-radius:3px;margin-top:4px;}
+  .hslhandle{position:absolute;top:50%;translate:0 -50%;width:20px;height:22px;border-radius:3px;transition:left .12s;
+    background:repeating-linear-gradient(90deg,#F0F2F4 0 3px,#9FA4AB 3px 6px);
+    border:1px solid #6E737C;box-shadow:0 2px 3px rgba(0,0,0,.4);}
+  .vsl{display:flex;gap:8px;align-items:center;flex:none;margin-top:6px;height:84px;}
+  .vslnums{display:flex;flex-direction:column-reverse;justify-content:space-between;height:100%;
+    font-size:12px;font-weight:800;color:var(--ink);}
+  .vsltrack{position:relative;width:6px;height:100%;background:#1A1C20;border-radius:3px;}
+  .vslhandle{position:absolute;left:50%;translate:-50% 0;width:22px;height:18px;border-radius:3px;transition:top .12s;
+    background:repeating-linear-gradient(0deg,#F0F2F4 0 3px,#9FA4AB 3px 6px);
+    border:1px solid #6E737C;box-shadow:0 2px 3px rgba(0,0,0,.4);}
+  /* decor */
+  .decor{cursor:default;}
+  .gaugeface{width:66px;height:36px;border-radius:66px 66px 0 0;border:2px solid #4A4E55;border-bottom:2px solid #4A4E55;
+    background:#F2F3F5;position:relative;overflow:hidden;margin-top:8px;flex:none;}
+  .gaugeface::before{content:'';position:absolute;inset:0;
+    background:conic-gradient(from -90deg at 50% 100%,transparent 0 118deg,rgba(200,40,30,.85) 118deg 180deg,transparent 180deg);}
+  .gneedle{position:absolute;left:50%;bottom:0;width:2.5px;height:30px;background:#16181C;transform-origin:50% 100%;
+    animation:wob 2.3s ease-in-out infinite alternate;}
+  @keyframes wob{0%{rotate:-55deg;}100%{rotate:48deg;}}
+  .lamprow{display:flex;gap:9px;margin-top:14px;}
+  .lamp{width:14px;height:14px;border-radius:50%;border:2px solid #55595F;background:#8B9097;box-shadow:inset 0 1px 2px rgba(0,0,0,.4);}
+  .lamp.r{background:var(--red-hi);box-shadow:0 0 9px rgba(240,86,74,.8);animation:blink 1.1s infinite;}
+  .lamp.a{background:var(--hot);box-shadow:0 0 9px rgba(240,138,29,.8);animation:blink 1.7s infinite;}
+  .lamp.g{background:var(--lime);box-shadow:0 0 9px rgba(185,212,11,.7);animation:blink 2.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+  /* ---------- FX ---------- */
+  #fx{position:fixed;inset:0;z-index:60;pointer-events:none;}
+  #flash{position:fixed;inset:0;z-index:55;pointer-events:none;opacity:0;
+    background:radial-gradient(circle at 50% 28%,rgba(240,140,30,.55),rgba(200,40,10,.3) 45%,transparent 75%);}
+  #flash.on{animation:flashA .5s ease-out;}
+  @keyframes flashA{0%{opacity:1;}100%{opacity:0;}}
+  .frame.shake1{animation:shk1 .35s;}
+  .frame.shake2{animation:shk2 .75s;}
+  @keyframes shk1{0%,100%{transform:translate(0,0);}20%{transform:translate(-6px,3px);}
+    40%{transform:translate(5px,-4px);}60%{transform:translate(-4px,-2px);}80%{transform:translate(3px,3px);}}
+  @keyframes shk2{0%,100%{transform:translate(0,0) rotate(0);}10%{transform:translate(-13px,7px) rotate(-.5deg);}
+    25%{transform:translate(11px,-9px) rotate(.6deg);}40%{transform:translate(-9px,-5px) rotate(-.4deg);}
+    55%{transform:translate(9px,7px) rotate(.5deg);}70%{transform:translate(-6px,3px) rotate(-.2deg);}
+    85%{transform:translate(4px,-3px);}}
+  /* ---------- stage screens (black space) ---------- */
+  .stage{position:relative;padding:26px 22px 32px;background:#000;overflow:hidden;min-height:380px;}
+  .stage .streaks,.stage .streaks2{opacity:.35;}
+  .stagein{position:relative;z-index:2;}
+  h1{font-size:clamp(26px,3.4vw,40px);line-height:1.1;margin:8px 0 8px;color:var(--white);font-weight:800;text-wrap:balance;}
+  h3{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--lime);margin:18px 0 8px;font-weight:800;}
+  p{max-width:64ch;} p.dim{color:var(--gray);}
+  .datebar{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--gray);text-transform:uppercase;}
+  .datebar b{color:var(--white);}
+  button.primary{font-family:var(--label);font-size:17px;font-weight:800;letter-spacing:.05em;color:var(--white);
+    background:
+      repeating-linear-gradient(45deg,rgba(0,0,0,.18) 0 2px,transparent 2px 12px),
+      repeating-linear-gradient(-45deg,rgba(0,0,0,.18) 0 2px,transparent 2px 12px),
+      radial-gradient(circle at 50% 30%,var(--red-hi),var(--red) 60%,var(--red-lo));
+    border:2px solid #4A0C08;border-radius:9px;padding:13px 26px;cursor:pointer;margin-top:18px;
+    text-shadow:0 1px 2px rgba(0,0,0,.6);box-shadow:0 3px 6px rgba(0,0,0,.5), inset 0 2px 4px rgba(255,255,255,.3);}
+  button.primary:hover{filter:brightness(1.12);}
+  button.primary:active{transform:translateY(2px);}
+  button.primary:focus-visible{outline:3px solid var(--white);outline-offset:2px;}
+  button.ghost{font-family:var(--label);font-size:13px;font-weight:700;color:var(--gray);background:transparent;
+    border:2px solid #3A3F47;border-radius:8px;padding:9px 14px;cursor:pointer;margin-top:18px;}
+  button.ghost:hover{color:var(--white);border-color:var(--gray);}
+  .log{border:2px solid #2A2E35;border-radius:8px;background:#0C0D10;padding:14px 16px;margin-top:16px;max-width:72ch;}
+  .log .loghead{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--hot);margin-bottom:6px;}
+  .log.good .loghead{color:var(--lime);}
+  .sharecard{border:2px solid #2A2E35;border-radius:8px;background:#0C0D10;padding:13px 16px;white-space:pre-wrap;
+    font-family:var(--mono);font-size:13px;margin-top:12px;max-width:72ch;}
+  table.results{border-collapse:collapse;margin-top:8px;font-size:14px;}
+  table.results td{padding:3px 14px 3px 0;color:var(--gray);}
+  table.results td.v{color:var(--lime);font-weight:800;}
+  .toggles{display:flex;gap:14px;margin-top:18px;flex-wrap:wrap;align-items:center;}
+  .toggles label{font-size:13px;font-weight:700;color:var(--gray);display:flex;gap:7px;align-items:center;cursor:pointer;}
+  .footer{margin-top:12px;font-family:var(--mono);font-size:10.5px;color:#5F656E;line-height:1.6;max-width:76ch;}
+  .footer a{color:var(--gray);}
+  @media (prefers-reduced-motion:reduce){
+    .streaks,.streaks2,.lamp,.gneedle,.fireflick{animation:none!important;}
+    .flashgood,.flashbad,.frame.shake1,.frame.shake2,#flash.on{animation:none!important;}
+  }
+  @media (max-width:640px){
+    .pgrid{grid-template-columns:repeat(auto-fill,minmax(94px,1fr));}
+    .cell .lbl{font-size:12px;}
+    .dialwrap{width:104px;height:98px;}
+  }
+</style>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="flash" aria-hidden="true"></div>
+<div class="ship">
+  <div class="frame">
+    <div class="frame-head">
+      <span class="id">HYPERSPELL · SUMMARIZER BRIDGE</span>
+      <span class="meters" id="meters"></span>
+    </div>
+    <div id="game"></div>
+  </div>
+  <div class="footer" id="foot"></div>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   BEDROCK SPACETEAM MK-III — styled after the real Spaceteam:
+   starfield viewport, white sentence-case orders, chartreuse
+   time bar, silver stippled console, black labels, quilted red
+   buttons, cracked plates over circuit board.
+   ============================================================ */
+
+const SECTIONSFLAT = [
+  {id:'timeout', lbl:'SUMMARIZER_CALL_TIMEOUT_SECONDS', mono:true, kind:'dial', vals:[6,12,30,300], cur:3, span:2,
+    alt:'Execs see spinners — timeout to {v}'},
+  {id:'plenum',  lbl:'MAX_TOKENS', mono:true, kind:'dial', vals:[1024,2048,4096], cur:0, span:2,
+    alt:'The summaries are truncating — MAX_TOKENS to {v}'},
+  {id:'carb',    lbl:'PRIMARY MODEL', kind:'hsl', vals:['20B','120B'], cur:1, span:2,
+    alt:'Quality complaints — PRIMARY MODEL to {v}'},
+  {id:'inject',  lbl:'FALLBACK_MODEL', mono:true, kind:'tog', vals:['NONE','LLAMA-3.1'], cur:0,
+    altOn:'Arm the llama fallback', altOff:'Kill the llama fallback, EU style'},
+  {id:'klaxon',  lbl:'PAGERDUTY', kind:'tog', vals:['MUTE','SCREAM'], cur:1,
+    altOff:'Somebody silence PagerDuty', altOn:'Let PagerDuty sing'},
+  {id:'conc',    lbl:'SUMMARIZER_MAX_CONCURRENCY', mono:true, kind:'hsl', vals:[8,12,16], cur:2, span:2,
+    alt:'Bedrock is throttling — SEMAPHORE to {v}'},
+  {id:'flywheel',lbl:'RETRY CYCLES', kind:'dial', vals:[0,1,2,3], cur:1, span:2,
+    alt:'Batches failing both models — RETRY CYCLES to {v}'},
+  {id:'degauss', lbl:'OTEL COLLECTOR', kind:'btn', verb:'Restart',
+    alt:'The gauges are folding — restart the OTEL COLLECTOR'},
+  {id:'stab',    lbl:'KEDA_BACKLOG_THRESHOLD', mono:true, kind:'vsl', vals:[100,250,500], cur:2},
+  {id:'nsgauge', lbl:'no_summary RATE', mono:true, kind:'decor', decor:'gauge'},
+  {id:'fuge',    lbl:'RDS PROXY POOL', kind:'dial', vals:[50,100,200], cur:0, span:2},
+  {id:'solenoid',lbl:'TEMPORAL HEARTBEAT', kind:'btn', verb:'Thump',
+    alt:'The activity is flatlining — thump the TEMPORAL HEARTBEAT'},
+  {id:'scupper', lbl:'STALE SWEEP', kind:'btn', verb:'Run',
+    alt:'Ten million PENDING — run the STALE SWEEP'},
+  {id:'lamps1',  lbl:'BEDROCK ALARMS', kind:'decor', decor:'lamps', lamps:['r','a','r']},
+  {id:'gyro',    lbl:'KEDA MAX REPLICAS', kind:'dial', vals:[8,14,40,80], cur:0, span:2,
+    alt:'Spin up more workers — KEDA MAX REPLICAS to {v}'},
+  {id:'coolant', lbl:'E5 AUTOSCALE MAX', kind:'vsl', vals:[3,10,20], cur:2},
+  {id:'bellows', lbl:'ESO SECRETS REFRESH', kind:'btn', verb:'Pump',
+    alt:'The secrets are stale — pump the ESO SECRETS REFRESH'},
+  {id:'manifold',lbl:'DOPPLER CONFIG', kind:'tog', vals:['PROD','PROD_EU'], cur:0, togSet:true},
+  {id:'lamps2',  lbl:'INGEST BACKLOG', kind:'decor', decor:'lamps', lamps:['a','a','r']},
+];
+const CONTROLS = SECTIONSFLAT;
+const OPERABLE = CONTROLS.filter(c=>c.kind!=='decor');
+const DEFAULT_CUR = CONTROLS.map(c=>c.cur||0);
+
+const BOLTED = [
+  {txt:'Set BATCH_SIZE to 5',                quip:'Not on the console. batch_size=10 is a field on the Summarizer component class — bolted since February, never revisited.'},
+  {txt:'Widen the RANK_SCAN_CAP',            quip:'No such knob here. RANK_SCAN_CAP=100k is a constant in cron_sweeps.py.'},
+  {txt:'Raise the SWEEP DISPATCH_CAP to 500',quip:'Look all you want — DISPATCH_CAP=100 is hardcoded in cron_sweeps.py. A code change away, like always.'},
+  {txt:'Read the SEMAPHORE WAIT metric',     quip:'That metric was never installed. Nobody has ever known how long a batch waits for a slot.'},
+  {txt:'Check the no_summary rate',          quip:'The needle you see is decoration — the real metric is not born until Jul 27 (ENG-3420). You are flying blind.'},
+  {txt:'Pull the INGEST_PAUSED lever',       quip:'The fabled pause lever exists only on an unmerged branch. Not on your panel. Not on anyone’s.'},
+  {txt:'Raise the Bedrock TPM quota',        quip:'That knob is in AWS’s cockpit, not yours. Also: gpt-oss was never even quota-throttled — the storm was self-inflicted.'},
+];
+
+/* Each wave replays its real era: `script` = the actual changes of that period,
+   issued as orders in chronological sequence; `pool` = era-plausible filler;
+   `bolts` = era-appropriate hardcoded traps (indices into BOLTED). */
+const WAVES = [
+  {n:6,  t:9.0, boltP:0,   bolts:[],      fold:0,   name:'WAVE 1 · FEB 2026 · COUPLING CONSTANTS',
+   script:[{id:'carb',val:'20B'}],
+   pool:['plenum','klaxon','fuge','solenoid','scupper'],
+   log:'Feb 24: primary → gpt-oss-20b, batch_size=10. Two constants fused in one afternoon; one of them will never be touched again. Learn your console.'},
+  {n:7,  t:8.0, boltP:0,   bolts:[],      fold:0,   name:'WAVE 2 · MAY 27 · THE FIRST VALVE',
+   script:[{id:'timeout',val:12},{id:'inject',val:'LLAMA-3.1'}],
+   pool:['flywheel','klaxon','degauss','bellows'],
+   log:'May 27: degraded calls pin slots for botocore’s full 300s. ENG-2284 installs a 12s timeout and the llama fallback — plus return-None-on-double-timeout, a failure mode with no gauge watching it.'},
+  {n:8,  t:7.0, boltP:.25, bolts:[0],     fold:0,   name:'WAVE 3 · JUN 1 · 4× OUTPUT',
+   script:[{id:'plenum',val:4096}],
+   pool:['solenoid','bellows','degauss','flywheel','carb','klaxon'],
+   log:'Jun 1: FT-49 sets MAX_TOKENS 1024→4096. Fixes truncation — correct! — and quadruples output work per call. Nobody re-derives the timeout. Latency drifts to 5–16s.'},
+  {n:8,  t:6.5, boltP:.3,  bolts:[2],     fold:.25, name:'WAVE 4 · JUL 8 · THE SIX-SECOND VALVE',
+   script:[{id:'timeout',val:6}],
+   pool:['degauss','stab','gyro','klaxon','scupper','plenum'],
+   log:'Jul 8: FT-110 cuts the timeout 12→6.0s to fix p95. Six seconds is the p50 of an ordinary call. Half of everything now trips the valve — billed in full.'},
+  {n:9,  t:6.0, boltP:.3,  bolts:[3,4],   fold:.3,  name:'WAVE 5 · JUL 15–22 · RECURSION',
+   script:[{id:'flywheel',val:2},{id:'conc',val:8}],
+   pool:['degauss','solenoid','bellows','stab','klaxon'],
+   log:'Jul 15: ENG-3149 adds a full extra retry cycle. Jul 22: ENG-3001 installs the pod-global Semaphore(8), shared by nine workers. Up to 4 billed calls per bad batch, held in one slot. Jul 27: the no_summary gauge is finally born — it opens its eyes at 20–25%.'},
+  {n:10, t:5.5, boltP:.35, bolts:[5,6,1], fold:.35, name:'WAVE 6 · AUG 2026 · THE STORM',
+   script:[{id:'manifold',val:'PROD_EU'},{id:'inject',val:'NONE'}],
+   pool:['scupper','gyro','coolant','fuge','bellows','stab','plenum','klaxon'],
+   log:'Aug 17: eleven billion calls/hr exceed 6.0s. The fallback fires forty thousand times per heartbeat. Yesterday’s bill is best measured in yachts (three). EU turns out to have no working llama fallback at all. Diagnosis complete — the panel is about to be yours.'},
+];
+
+const BOSS = [
+  {kind:'set',   id:'timeout', val:30, txt:'Set SUMMARIZER_CALL_TIMEOUT_SECONDS to 30'},
+  {kind:'set',   id:'conc',    val:16, txt:'Set SUMMARIZER_MAX_CONCURRENCY to 16 — pair the knobs'},
+  {kind:'press', id:'bellows',         txt:'Pump the ESO SECRETS REFRESH and roll out'},
+];
+
+const TITLES = [
+  {min:760,t:'CHIEF VALVE OFFICER'},{min:600,t:'JOINT-CONSTRAINT ENJOYER'},
+  {min:420,t:'VALVE ENGINEER'},{min:200,t:'KNOB TURNER'},{min:-1,t:'PAGER-DUTY CASUALTY'},
+];
+
+/* ---------------- state ---------------- */
+const S = {
+  wave:0, cmdN:0, score:0, streak:0, best:0, hull:100,
+  active:null, timer:null, tEnd:0, cadet:false, over:false,
+  bossIdx:0, usedBolted:[], lastId:null, cracks:new Set(),
+};
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function setMeters(){
+  $('meters').innerHTML=
+    `<span>HULL <span class="hullbar ${S.hull<=35?'low':''}"><i style="width:${S.hull}%"></i></span> <b>${S.hull}%</b></span>`+
+    `<span>SCORE <b>${S.score}</b></span><span>STREAK <b>${S.streak}</b></span>`;
+}
+
+/* ---------------- FX: particles, flash, shake ---------------- */
+const FX=(()=>{
+  const cv=document.getElementById('fx'), cx=cv.getContext('2d');
+  const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let parts=[], raf=null;
+  function size(){cv.width=innerWidth;cv.height=innerHeight;}
+  size(); addEventListener('resize',size);
+  function loop(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    parts=parts.filter(p=>p.life>0);
+    if(!parts.length){raf=null;return;}
+    for(const p of parts){
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.14; p.vx*=0.99; p.life-=p.decay;
+      cx.globalAlpha=Math.max(0,p.life);
+      cx.fillStyle=p.col;
+      cx.fillRect(p.x,p.y,p.s,p.s);
+    }
+    cx.globalAlpha=1;
+    raf=requestAnimationFrame(loop);
+  }
+  function burst(x,y,o={}){
+    if(RM) return;
+    const n=o.count||26, pow=o.power||5,
+      cols=o.colors||['#F08A1D','#E8564A','#FFD9A0','#C8281E'];
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, v=(Math.random()*.7+.3)*pow;
+      parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-pow*.35,
+        s:Math.random()*3.5+2,col:cols[Math.floor(Math.random()*cols.length)],
+        life:1,decay:Math.random()*.02+.012});
+    }
+    if(!raf) raf=requestAnimationFrame(loop);
+  }
+  function rectBurst(el,o){
+    if(!el) return;
+    const r=el.getBoundingClientRect();
+    burst(r.left+r.width/2, r.top+r.height/2, o);
+  }
+  function shake(lvl){
+    if(RM) return;
+    const f=document.querySelector('.frame'); if(!f) return;
+    const c=lvl>1?'shake2':'shake1';
+    f.classList.remove('shake1','shake2'); void f.offsetWidth; f.classList.add(c);
+    setTimeout(()=>f.classList.remove(c), lvl>1?800:400);
+  }
+  function flash(){
+    if(RM) return;
+    const fl=document.getElementById('flash');
+    fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
+  }
+  function barrage(n,o){
+    if(RM) return;
+    const f=document.querySelector('.frame'); const r=f?f.getBoundingClientRect():{left:0,top:0,width:innerWidth,height:innerHeight};
+    for(let i=0;i<n;i++){
+      setTimeout(()=>burst(r.left+Math.random()*r.width, r.top+Math.random()*r.height*.7, o), i*160);
+    }
+  }
+  return {burst,rectBurst,shake,flash,barrage};
+})();
+
+/* ---------------- console rendering ---------------- */
+function viewportHtml(){
+  return `<div class="viewport" id="vp"><div class="streaks"></div><div class="streaks2"></div>
+    <div class="vessel"><div class="hullbody"></div></div>
+    <div class="fire" id="fire"></div></div>`;
+}
+function setFire(){
+  const f=$('fire'); if(!f) return;
+  f.classList.remove('f1','f2','fireflick');
+  if(S.hull<=0){f.classList.add('f2','fireflick');}
+  else if(S.hull<=35){f.classList.add('f1','fireflick');}
+}
+function fireBlast(){
+  const f=$('fire'); if(!f) return;
+  f.classList.add('f2','fireflick');
+  setTimeout(setFire,700);
+}
+
+function dialHtml(c){
+  const n=c.vals.length, deg=(c.cur/(n-1))*270-135;
+  const nums=c.vals.map((v,i)=>{
+    const a=(i/(n-1))*270-135, rad=a*Math.PI/180;
+    const x=59+46*Math.sin(rad), y=54-40*Math.cos(rad);
+    return `<span class="dialnum" style="left:${x}px;top:${y}px">${v}</span>`;
+  }).join('');
+  return `<div class="dialwrap">${nums}<div class="knob knob-el" style="rotate:${deg}deg"></div></div>`;
+}
+
+function lblHtml(c){
+  // mono labels break after underscores, never mid-word
+  return c.mono ? esc(c.lbl).replace(/_/g,'_​') : esc(c.lbl);
+}
+
+function ctlHtml(c){
+  const span=c.span===2?'span2':'';
+  const fold=c.folded?'folded':'';
+  const crack=S.cracks.has(c.id)?'cracked':'';
+  const lblCls=c.mono?'lbl mono':'lbl';
+  if(c.kind==='decor'){
+    const body=c.decor==='gauge'
+      ? `<div class="gaugeface"><div class="gneedle"></div></div>`
+      : `<div class="lamprow">${c.lamps.map(x=>`<span class="lamp ${x}"></span>`).join('')}</div>`;
+    return `<div class="cell decor ${span} ${fold} ${crack}" data-id="${c.id}"><div class="${lblCls}">${lblHtml(c)}</div>${body}</div>`;
+  }
+  let body='';
+  if(c.kind==='dial') body=dialHtml(c);
+  else if(c.kind==='tog') body=`<div class="swbase ${c.cur===1?'sw-on':'sw-off'}"><div class="swlever"></div></div>
+    <div class="swstate">${esc(c.vals[c.cur])}</div>`;
+  else if(c.kind==='hsl'){
+    const n=c.vals.length, left=2+(c.cur/(n-1))*80;
+    body=`<div class="hsl"><div class="hslnums">${c.vals.map(v=>`<span>${v}</span>`).join('')}</div>
+      <div class="hsltrack"><div class="hslhandle" style="left:${left}px"></div></div></div>`;
+  }
+  else if(c.kind==='vsl'){
+    const n=c.vals.length, top=2+((n-1-c.cur)/(n-1))*62;
+    body=`<div class="vsl"><div class="vslnums">${c.vals.map(v=>`<span>${v}</span>`).join('')}</div>
+      <div class="vsltrack"><div class="vslhandle" style="top:${top}px"></div></div></div>`;
+  }
+  else body=`<div class="redbtn">${c.id==='inject'||c.id==='klaxon'?'ON':''}</div>`;
+  return `<div class="cell ${span} ${fold} ${crack}" data-id="${c.id}" tabindex="0" role="button"
+    aria-label="${esc(c.lbl)}"><div class="${lblCls}">${lblHtml(c)}</div>${body}</div>`;
+}
+
+function renderConsole(){
+  const hard=`<div class="cell rowwide" data-id="__hard" tabindex="0" role="button" aria-label="It's hardcoded">
+    <div class="redbar">🔩 IT'S HARDCODED</div></div>`;
+  $('board').innerHTML=`<div class="pgrid">${CONTROLS.map(ctlHtml).join('')}${hard}</div>`;
+  document.querySelectorAll('.cell:not(.decor)').forEach(el=>{
+    const h=()=>operate(el.dataset.id, el);
+    el.addEventListener('click',h);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();h();}});
+  });
+  document.querySelectorAll('.cell.decor').forEach(el=>{
+    el.addEventListener('click',()=>toast('That’s a gauge, not a control. It may also be lying to you.',''));
+  });
+  setFire();
+}
+
+function elFor(id){ return id?document.querySelector(`.cell[data-id="${id}"]`):null; }
+
+function updateCracks(){
+  const want=Math.min(5,Math.floor((100-S.hull)/20));
+  const ids=OPERABLE.map(c=>c.id);
+  while(S.cracks.size<want){
+    S.cracks.add(ids[Math.floor(Math.random()*ids.length)]);
+  }
+}
+
+function operate(id, el){
+  if(!S.active||S.over) return;
+  S.lastId=id;
+  if(id==='__hard'){
+    if(S.active.kind==='bolted'){ succeed(S.active.quip); }
+    else { S.hull=Math.max(0,S.hull-5); S.streak=0; updateCracks(); setMeters();
+      FX.rectBurst(elFor(S.lastId),{count:18,power:4}); FX.shake(1);
+      toast('That knob IS on the console. Keep hunting. −5 hull.','bad');
+      if(!checkDeath()) renderConsole(); }
+    return;
+  }
+  const c=CONTROLS.find(x=>x.id===id); if(!c||c.kind==='decor') return;
+  if(c.kind==='btn'){
+    if(S.active.kind==='press'&&S.active.id===id){ succeed(); }
+    else toast('It clicks satisfyingly. Nothing else happens.','');
+    return;
+  }
+  c.cur=(c.cur+1)%c.vals.length;
+  renderConsole();
+  if(S.active.kind==='set'&&S.active.id===id&&c.vals[c.cur]===S.active.val){ succeed(); }
+}
+
+/* ---------------- order generation ---------------- */
+function orderText(c,v){
+  if(c.kind==='tog'){
+    const on=(v===c.vals[1]);
+    if(Math.random()<0.45){
+      if(on&&c.altOn) return c.altOn;
+      if(!on&&c.altOff) return c.altOff;
+    }
+    if(c.togSet) return `Set ${c.lbl} to ${v}`;
+    return `Turn ${on?'on':'off'} ${c.lbl}`;
+  }
+  if(c.kind==='btn'){
+    if(c.alt&&Math.random()<0.45) return c.alt;
+    return `${c.verb} the ${c.lbl}`;
+  }
+  if(c.alt&&Math.random()<0.35) return c.alt.replace('{v}',v);
+  return `Set ${c.lbl} to ${v}`;
+}
+
+function ctlOrder(c, exactVal){
+  if(c.kind==='btn') return {kind:'press', id:c.id, txt:orderText(c)};
+  let v;
+  if(exactVal!==undefined){ v=exactVal; }
+  else {
+    let vi=Math.floor(Math.random()*c.vals.length);
+    if(vi===c.cur) vi=(vi+1)%c.vals.length;
+    v=c.vals[vi];
+  }
+  return {kind:'set', id:c.id, val:v, txt:orderText(c,v)};
+}
+
+function boltOrder(i){
+  S.usedBolted.push(i);
+  const b=BOLTED[i];
+  return {kind:'bolted', txt:b.txt, quip:b.quip};
+}
+
+function makeOrder(cfg){
+  const k=S.cmdN-1;
+  // chronological era script first — the real changes, in the real sequence
+  if(cfg.script && k<cfg.script.length){
+    const s=cfg.script[k];
+    return ctlOrder(CONTROLS.find(c=>c.id===s.id), s.val);
+  }
+  // era-appropriate hardcoded traps
+  if(cfg.bolts.length && Math.random()<cfg.boltP){
+    const avail=cfg.bolts.filter(i=>!S.usedBolted.includes(i));
+    if(avail.length) return boltOrder(avail[Math.floor(Math.random()*avail.length)]);
+  }
+  // era-plausible filler from the wave's pool
+  const id=cfg.pool[Math.floor(Math.random()*cfg.pool.length)];
+  return ctlOrder(CONTROLS.find(c=>c.id===id));
+}
+
+function maybeFold(cfg){
+  CONTROLS.forEach(c=>c.folded=false);
+  if(Math.random()<cfg.fold){
+    const pool=CONTROLS.slice();
+    for(let i=0;i<4&&pool.length;i++){
+      const j=Math.floor(Math.random()*pool.length);
+      pool.splice(j,1)[0].folded=true;
+    }
+    toast('⚠ OTEL FOLD — the collector ate some labels. Navigate from memory.','');
+  }
+}
+
+function nextCommand(){
+  const cfg=WAVES[S.wave];
+  if(S.cmdN>=cfg.n){ waveEnd(); return; }
+  S.cmdN++;
+  maybeFold(cfg); renderConsole();
+  S.active=makeOrder(cfg);
+  $('cmd').innerHTML=`<span class="arrow">▶</span>${esc(S.active.txt)}`;
+  $('wavetag').textContent=`${cfg.name} · ORDER ${S.cmdN}/${cfg.n}`;
+  startTimer(S.cadet?cfg.t*1.6:cfg.t, expire);
+}
+
+function succeed(extra){
+  clearT();
+  S.streak++; S.best=Math.max(S.best,S.streak);
+  const bonus=S.streak>=3?5:0;
+  S.score+=10+bonus; setMeters();
+  FX.rectBurst(elFor(S.lastId),{count:14,power:3.5,colors:['#B9D40B','#FFD9A0','#DDF56A']});
+  const d=$('deckwrap'); if(d){d.classList.remove('flashbad');d.classList.add('flashgood');}
+  toast(extra?('✔ '+extra):(bonus?`✔ +${10+bonus} (streak ×${S.streak})`:'✔ +10'),'good');
+  S.active=null;
+  setTimeout(()=>{const w=$('deckwrap'); if(w)w.classList.remove('flashgood'); nextCommand();},430);
+}
+
+function expire(){
+  S.hull=Math.max(0,S.hull-12); S.streak=0; updateCracks(); setMeters();
+  FX.rectBurst($('deckwrap'),{count:44,power:6.5}); FX.shake(1); FX.flash(); fireBlast();
+  const d=$('deckwrap'); if(d)d.classList.add('flashbad');
+  const b=S.active&&S.active.kind==='bolted';
+  toast(b?('✘ −12 hull. '+S.active.quip+' (The 🔩 bar was the answer.)'):'✘ −12 hull. The valve waits for no one.','bad');
+  S.active=null;
+  if(checkDeath()) return;
+  renderConsole();
+  setTimeout(()=>{const w=$('deckwrap'); if(w)w.classList.remove('flashbad'); nextCommand();},650);
+}
+
+function checkDeath(){
+  if(S.hull>0) return false;
+  clearT(); S.over=true; showGameOver(); return true;
+}
+
+/* ---------------- timer ---------------- */
+function clearT(){ if(S.timer){cancelAnimationFrame(S.timer);S.timer=null;} }
+function startTimer(secs,onEnd){
+  clearT();
+  S.tEnd=performance.now()+secs*1000;
+  const tick=()=>{
+    const f=$('tfill'); if(!f){clearT();return;}
+    const left=Math.max(0,S.tEnd-performance.now()), frac=left/(secs*1000);
+    f.style.width=(frac*100)+'%';
+    f.classList.toggle('hot',frac<0.35);
+    if(left<=0){clearT();onEnd();return;}
+    S.timer=requestAnimationFrame(tick);
+  };
+  S.timer=requestAnimationFrame(tick);
+}
+function toast(msg,cls){ const t=$('toast'); if(t){t.className='toast '+(cls||''); t.textContent=msg;} }
+
+/* ---------------- screens ---------------- */
+function gameShell(){
+  $('game').innerHTML=`
+    ${viewportHtml()}
+    <div class="deck" id="deckwrap">
+      <div class="wavetag" id="wavetag"></div>
+      <div class="cmd" id="cmd"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+    <div class="timerbar"><div class="timerfill" id="tfill"></div></div>
+    <div class="console" id="board"></div>`;
+  renderConsole();
+}
+
+function spaceStage(inner){
+  return `<div class="stage"><div class="streaks"></div><div class="streaks2"></div>
+    <div class="stagein">${inner}</div></div>`;
+}
+
+function showTitle(){
+  clearT(); S.over=false; setMeters();
+  const best=store.get('bst3-best');
+  $('game').innerHTML=spaceStage(`
+    <div class="datebar">SINGLE-PLAYER SPACETEAM · FEB→AUG 2026 · ~4 MINUTES</div>
+    <h1>BEDROCK SPACETEAM</h1>
+    <p class="dim">A full console. Orders that name instruments you have never heard of.
+    A timer that does not care. Click knobs to turn them, switches to flip them, buttons
+    to press them — and when the ordered knob is <em>not on the console at all</em>
+    (in this system, it often is not), slam the big red bar:
+    <span style="color:var(--red-hi);font-weight:800">🔩 IT'S HARDCODED</span></p>
+    <p class="dim">Every instrument is a real knob from the incident — Doppler vars, KEDA
+    triggers, the llama fallback, the stale sweep. When an order names something that really
+    is hardcoded, no amount of hunting will find it. Some instruments are only gauges.
+    The no_summary gauge is lying: it isn't born until Jul 27.</p>
+    ${best?`<p class="dim">Best shift on this console: <b style="color:var(--white)">${esc(best)}</b></p>`:''}
+    <div class="toggles">
+      <label><input type="checkbox" id="cadet" ${S.cadet?'checked':''}> CADET MODE — 60% more time on the clock</label>
+    </div>
+    <button class="primary" id="go">CLOCK IN</button>`);
+  $('cadet').addEventListener('change',e=>S.cadet=e.target.checked);
+  $('go').addEventListener('click',()=>{
+    Object.assign(S,{wave:0,cmdN:0,score:0,streak:0,best:0,hull:100,over:false,bossIdx:0,usedBolted:[],cracks:new Set()});
+    CONTROLS.forEach((c,i)=>{c.folded=false; if(c.kind!=='decor'&&c.kind!=='btn') c.cur=DEFAULT_CUR[i];});
+    setMeters(); startWave();
+  });
+  $('foot').innerHTML='Based on a true incident at <a href="https://hyperspell.com">Hyperspell</a>: five reasonable engineering decisions, one starved summarizer, one paired config flip. The dates, knobs, and percentages are real; the dollar amounts and volumes have been replaced with outrageous ones on purpose. Built with Claude.';
+}
+
+function startWave(){
+  const cfg=WAVES[S.wave];
+  $('game').innerHTML=spaceStage(`
+    <div class="datebar"><b>${esc(cfg.name)}</b></div>
+    <div class="log"><div class="loghead">CAPTAIN'S LOG</div><p class="dim">${esc(cfg.log)}</p></div>
+    <p class="dim" style="font-size:13px;">${cfg.n} orders · ${(S.cadet?cfg.t*1.6:cfg.t).toFixed(1)}s each${cfg.fold?' · ⚠ fold risk':''}${cfg.bolts.length?' · 🔩 expect bolted orders':''}</p>
+    <button class="primary" id="go">ON SHIFT</button>`);
+  $('go').addEventListener('click',()=>{S.cmdN=0; gameShell(); nextCommand();});
+}
+
+function waveEnd(){
+  clearT(); S.active=null;
+  S.wave++;
+  if(S.wave>=WAVES.length){ showBossIntro(); return; }
+  const healed=Math.min(100,S.hull+8); const gain=healed-S.hull; S.hull=healed; setMeters();
+  $('game').innerHTML=spaceStage(`
+    <div class="datebar" style="color:var(--lime)">WAVE CLEARED${gain?` · HULL PATCHED +${gain}%`:''}</div>
+    <h1 style="font-size:26px;">SHIFT CONTINUES.</h1>
+    <p class="dim">The console hums. The orders get faster. Nothing gets simpler.</p>
+    <button class="primary" id="go">NEXT WAVE</button>`);
+  $('go').addEventListener('click',startWave);
+}
+
+function showBossIntro(){
+  $('game').innerHTML=spaceStage(`
+    <div class="datebar"><b>FINAL SHIFT · AUG 18, 2026 · 05:40 UTC</b></div>
+    <h1 style="font-size:28px;">WAVE 1. THE PANEL IS YOURS.</h1>
+    <div class="log"><div class="loghead">CAPTAIN'S LOG</div>
+    <p class="dim">Diagnosis complete. Forget the centrifuge, the gyroscope, the camelid.
+    The whole storm comes down to the two instruments with the boring names — and raising
+    the timeout alone makes starvation worse. Three orders. They only work together.</p></div>
+    <button class="primary" id="go">EXECUTE WAVE 1</button>`);
+  $('go').addEventListener('click',()=>{
+    // prod really was at 6/8 when Wave 1 began
+    CONTROLS.find(c=>c.id==='timeout').cur=0;
+    CONTROLS.find(c=>c.id==='conc').cur=0;
+    S.bossIdx=0; gameShell(); bossCommand();
+  });
+}
+
+function bossCommand(){
+  const b=BOSS[S.bossIdx];
+  CONTROLS.forEach(c=>c.folded=false); renderConsole();
+  S.active={kind:b.kind, id:b.id, val:b.val, txt:b.txt, _boss:true};
+  $('cmd').innerHTML=`<span class="arrow">▶</span>${esc(b.txt)}`;
+  $('wavetag').textContent=`WAVE-1 SEQUENCE · STEP ${S.bossIdx+1}/3`;
+  startTimer(S.cadet?13:9, ()=>{
+    S.active=null;
+    S.hull=Math.max(0,S.hull-12); S.streak=0; updateCracks(); setMeters();
+    FX.rectBurst($('deckwrap'),{count:44,power:6.5}); FX.shake(1); FX.flash(); fireBlast();
+    toast('✘ −12 hull. Take the order again — the sequence stands.','bad');
+    if(checkDeath()) return;
+    renderConsole();
+    setTimeout(bossCommand,600);
+  });
+}
+
+const _succeed=succeed;
+succeed=function(extra){
+  const boss=S.active&&S.active._boss;
+  if(!boss){ _succeed(extra); return; }
+  clearT(); S.streak++; S.best=Math.max(S.best,S.streak); S.score+=40; setMeters();
+  FX.rectBurst(elFor(S.lastId),{count:36,power:5.5,colors:['#B9D40B','#FFD9A0','#DDF56A','#FFFFFF']}); FX.shake(1);
+  const d=$('deckwrap'); if(d)d.classList.add('flashgood');
+  toast('✔ +40 — order executed.','good');
+  S.active=null; S.bossIdx++;
+  setTimeout(()=>{
+    const w=$('deckwrap'); if(w)w.classList.remove('flashgood');
+    if(S.bossIdx>=BOSS.length){ showVictory(); } else { bossCommand(); }
+  },450);
+};
+
+function showVictory(){
+  clearT();
+  FX.barrage(9,{count:34,power:6,colors:['#B9D40B','#FFD9A0','#DDF56A','#FFFFFF']});
+  const title=TITLES.find(t=>S.score>=t.min).t;
+  const share=`🕹️ BEDROCK SPACETEAM — ${title}
+survived to WAVE 1 · score ${S.score} · best streak ${S.best} · hull ${S.hull}%
+🔩 the knob you need is never on your panel`;
+  saveBest(title);
+  $('game').innerHTML=spaceStage(`
+    <div class="datebar" style="color:var(--lime)">ALL CELLS AT 30/16 · STAGED: STAGING → PROD-US → PROD-EU</div>
+    <h1 style="color:var(--lime);font-size:28px;">THE BOARD IS GREEN.</h1>
+    <div class="log good"><div class="loghead">MEASURED RESULT — THE PERCENTAGES ARE REAL (AUG 18)</div>
+      <table class="results">
+        <tr><td>llama fallbacks</td><td class="v">continuous storm → occasional cough (−98%)</td></tr>
+        <tr><td>"returning no completion"</td><td class="v">a firehose → 0</td></tr>
+        <tr><td>gpt-oss p95</td><td class="v">~50s → 15–26s</td></tr>
+        <tr><td>calls per durable chunk</td><td class="v">~3.5 → 0.6–0.8</td></tr>
+      </table></div>
+    <h1 style="font-size:22px;margin-top:22px;">${esc(title)}</h1>
+    <p>score <b>${S.score}</b> · best streak <b>${S.best}</b> · hull <b style="color:${S.hull>40?'var(--lime)':'var(--red-hi)'}">${S.hull}%</b></p>
+    <h3>PASTE YOUR SHIFT IN SLACK</h3>
+    <div class="sharecard">${esc(share)}</div>
+    <div class="toggles">
+      <button class="primary" id="copy">COPY RESULT</button>
+      <button class="ghost" id="again">CLOCK IN AGAIN</button>
+    </div>`);
+  wireEnd(share);
+}
+
+function showGameOver(){
+  FX.flash(); FX.shake(2);
+  FX.barrage(7,{count:50,power:8,colors:['#E8564A','#F08A1D','#FFD9A0','#C8281E']});
+  const cfg=WAVES[Math.min(S.wave,WAVES.length-1)];
+  const title=TITLES.find(t=>S.score>=t.min).t;
+  const share=`🕹️ BEDROCK SPACETEAM — ${title}
+hull breach on ${cfg.name.split('·')[0].trim()} · score ${S.score} · best streak ${S.best}
+the pager wins this round`;
+  saveBest(title);
+  $('game').innerHTML=spaceStage(`
+    <div class="datebar" style="color:var(--red-hi)">HULL BREACH</div>
+    <h1 style="color:var(--red-hi);font-size:28px;">SHIFT OVER. THE PAGER WINS.</h1>
+    <p class="dim">For the record: the real crew didn’t die either — they shipped five
+    reasonable mistakes over five months, then fixed it with one paired Doppler flip.
+    You can always clock back in.</p>
+    <p>score <b>${S.score}</b> · best streak <b>${S.best}</b> · reached <b>${esc(cfg.name.split('·')[0].trim())}</b></p>
+    <h3>PASTE YOUR SHIFT IN SLACK</h3>
+    <div class="sharecard">${esc(share)}</div>
+    <div class="toggles">
+      <button class="primary" id="copy">COPY RESULT</button>
+      <button class="ghost" id="again">CLOCK IN AGAIN</button>
+    </div>`);
+  wireEnd(share);
+}
+
+function saveBest(title){
+  const prev=parseInt(store.get('bst3-best-n')||'-1',10);
+  if(S.score>prev){store.set('bst3-best-n',String(S.score));store.set('bst3-best',`${S.score} pts — ${title}`);}
+}
+function wireEnd(share){
+  $('copy').addEventListener('click',async()=>{
+    try{await navigator.clipboard.writeText(share);$('copy').textContent='COPIED ✓';}
+    catch(e){$('copy').textContent='SELECT & COPY ABOVE';}
+  });
+  $('again').addEventListener('click',showTitle);
+}
+
+if(location.hash==='#panel'){
+  // static console render for layout inspection — no timers, no orders
+  setMeters(); gameShell();
+  const c=$('cmd'); if(c) c.innerHTML='<span class="arrow">▶</span>Panel inspection — static';
+} else {
+  showTitle();
+}
+</script>

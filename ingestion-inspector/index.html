@@ -1,0 +1,798 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ingestion Inspector</title>
+<style>
+  :root{
+    --desk:#38362f; --booth:#26241f; --booth2:#1d1b17;
+    --paper:#e9e1cb; --paper-dim:#d8cfb4; --ink:#2b2620; --ink-soft:#5a5244;
+    --approve:#2f7d4f; --deny:#a63a2e; --brass:#c9a227;
+    --chrome:#8f887a; --text:#cfc8b6; --text-dim:#8f887a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--booth2);color:var(--text);
+    font-family:"Courier New",Courier,monospace;min-height:100%}
+  button{font-family:inherit;cursor:pointer}
+  .wrap{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
+  /* ---------- header ---------- */
+  header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    border-bottom:3px double var(--chrome);padding-bottom:10px;flex-wrap:wrap}
+  header h1{font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:var(--paper)}
+  header .sub{font-size:11px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase}
+  .counters{display:flex;gap:14px;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .counters span b{color:var(--paper);font-variant-numeric:tabular-nums}
+  .counters .bad b{color:#e07a5f}
+  /* ---------- mode plaque + pipeline map ---------- */
+  .modebar{margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:stretch}
+  .plaque{background:var(--booth);border:2px solid var(--brass);padding:8px 12px;min-width:250px}
+  .plaque .pm{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass)}
+  .plaque .pd{font-size:11px;color:var(--text);margin-top:3px;line-height:1.5}
+  .pipe{flex:1;background:var(--booth);border:1px solid #3f3c33;padding:8px 12px;
+    display:flex;flex-direction:column;gap:5px;justify-content:center;overflow-x:auto}
+  .pipe .row{display:flex;gap:4px;align-items:center;white-space:nowrap}
+  .pipe .rl{font-size:9px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase;width:64px;flex:none}
+  .st{font-size:9px;letter-spacing:.1em;text-transform:uppercase;border:1px solid #4a463a;
+    color:var(--text-dim);padding:3px 6px}
+  .st.you{border-width:2px}
+  .st.on{border-color:var(--brass);color:var(--paper);background:var(--booth2)}
+  .st.hot{border-color:var(--deny);color:#e07a5f}
+  .arrow{color:#4a463a;font-size:10px}
+  /* ---------- desk grid ---------- */
+  .desk{display:grid;grid-template-columns:215px 1fr 250px;gap:14px;margin-top:14px;align-items:start}
+  @media (max-width:900px){.desk{grid-template-columns:1fr}.side{order:2}}
+  .panel{background:var(--booth);border:1px solid #3f3c33;padding:12px}
+  .panel h3{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);
+    border-bottom:1px solid #3f3c33;padding-bottom:6px;margin-bottom:8px}
+  /* filter wall */
+  .filter{border:1px dashed #4a463a;padding:7px 8px;margin-bottom:7px;background:var(--booth2)}
+  .filter .fname{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--paper)}
+  .filter .fdesc{font-size:11px;color:var(--text-dim);margin-top:3px;line-height:1.45}
+  .filter.new{border-color:var(--brass)}
+  .filter.new .fname::after{content:" · NEW";color:var(--brass)}
+  /* lever */
+  .lever{margin-top:12px;border-top:1px solid #3f3c33;padding-top:10px}
+  .lever .lab{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);line-height:1.5}
+  .toggle{margin-top:8px;width:100%;padding:9px 6px;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;border:2px solid var(--deny);background:var(--booth2);color:#e07a5f}
+  .toggle.on{border-color:var(--approve);color:#7fbf9a}
+  /* ---------- stage / paper ---------- */
+  .stage{min-height:430px;display:flex;flex-direction:column;gap:12px}
+  .paper{background:var(--paper);color:var(--ink);padding:18px 20px 22px;
+    box-shadow:4px 5px 0 rgba(0,0,0,.45);position:relative}
+  .paper .phead{display:flex;justify-content:space-between;gap:10px;border-bottom:2px solid var(--ink);
+    padding-bottom:8px;margin-bottom:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+  .paper .pname{font-weight:bold}
+  .paper .src{color:var(--ink-soft)}
+  .chunk{font-family:Georgia,"Times New Roman",serif;font-size:14.5px;line-height:1.55;
+    padding:9px 10px;border-bottom:1px dotted #b3a888;max-width:62ch}
+  .chunk:last-child{border-bottom:none}
+  .chunk .cn{font-family:"Courier New",monospace;font-size:9px;letter-spacing:.15em;
+    color:var(--ink-soft);display:block;margin-bottom:3px}
+  .stampmark{position:absolute;right:22px;top:44px;font-size:22px;letter-spacing:.18em;
+    text-transform:uppercase;font-weight:bold;padding:8px 14px;border:4px solid;
+    transform:rotate(-11deg);opacity:0;pointer-events:none}
+  .stampmark.show{opacity:.88;transition:opacity .12s steps(2)}
+  .stampmark.ok{color:var(--approve);border-color:var(--approve)}
+  .stampmark.no{color:var(--deny);border-color:var(--deny)}
+  /* actions */
+  .actions{display:flex;gap:12px;flex-wrap:wrap}
+  .stamp{flex:1;min-width:130px;padding:16px 10px;font-size:13px;letter-spacing:.18em;
+    text-transform:uppercase;font-weight:bold;border:3px solid;background:var(--booth)}
+  .stamp:active{transform:translateY(2px)}
+  .stamp.ok{color:#7fbf9a;border-color:var(--approve)}
+  .stamp.no{color:#e07a5f;border-color:var(--deny)}
+  .stamp.mid{color:var(--brass);border-color:var(--brass);font-size:11px}
+  .stamp:disabled{opacity:.35;cursor:default}
+  .hint{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-align:center}
+  /* ---------- side: search + drawer ---------- */
+  .side .log{font-size:11px;line-height:1.6;max-height:180px;overflow-y:auto}
+  .log .q{color:var(--paper)}
+  .log .zero{color:#e07a5f}
+  .log .hit{color:#7fbf9a}
+  .drawer-item{border:1px solid #4a463a;background:var(--booth2);padding:6px 8px;margin-bottom:6px;font-size:11px}
+  .drawer-item .dn{color:var(--paper);letter-spacing:.06em}
+  .drawer-item .dm{color:var(--text-dim);margin-top:2px;line-height:1.5}
+  .drawer-item .dt{color:var(--brass)}
+  .drawer-item.tomb{opacity:.65;border-style:dotted}
+  .drawer-item button{margin-top:5px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    background:none;border:1px solid var(--approve);color:#7fbf9a;padding:4px 8px}
+  /* ---------- ticker ---------- */
+  .ticker{position:fixed;left:0;right:0;bottom:0;background:var(--booth2);
+    border-top:2px solid var(--chrome);padding:9px 16px;font-size:12px;letter-spacing:.06em;color:var(--brass)}
+  /* ---------- overlays ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(10,9,7,.82);display:flex;
+    align-items:center;justify-content:center;padding:18px;z-index:50}
+  .slip{background:var(--paper);color:var(--ink);max-width:560px;width:100%;padding:22px 24px;
+    box-shadow:6px 7px 0 rgba(0,0,0,.6);max-height:88vh;overflow-y:auto}
+  .slip.cite{border-top:14px solid var(--deny)}
+  .slip.note{border-top:14px solid var(--brass)}
+  .slip.good{border-top:14px solid var(--approve)}
+  .slip h2{font-size:14px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px;text-wrap:balance}
+  .slip .rule{font-family:Georgia,serif;font-size:14px;line-height:1.55;max-width:60ch}
+  .slip .rulecode{margin-top:10px;background:#efe8d4;border-left:3px solid var(--deny);
+    padding:8px 10px;font-size:11px;line-height:1.6;color:var(--ink-soft);overflow-x:auto;
+    font-family:"Courier New",monospace}
+  .slip .btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .slip button{padding:10px 16px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    border:2px solid var(--ink);background:var(--paper);color:var(--ink)}
+  .slip button.primary{background:var(--ink);color:var(--paper)}
+  /* corpus grid (act 2) */
+  .corpus{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .cdoc{border:1px solid #4a463a;background:var(--booth2);padding:7px 8px;font-size:10.5px;line-height:1.5}
+  .cdoc .dn{color:var(--paper)}
+  .cdoc .cs{letter-spacing:.1em;text-transform:uppercase}
+  .cdoc .cs.vault{color:var(--text-dim)}
+  .cdoc .cs.match{color:#e07a5f}
+  .cdoc .cs.clean{color:#7fbf9a}
+  .cdoc.dim{opacity:.5}
+  .report td,.report th{font-size:11px;padding:3px 8px 3px 0;text-align:left;
+    font-variant-numeric:tabular-nums;color:var(--text)}
+  .report th{color:var(--brass);letter-spacing:.1em;text-transform:uppercase;font-size:10px}
+  .banner{padding:10px 12px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;border:2px solid}
+  .banner.err{border-color:var(--deny);color:#e07a5f}
+  .banner.ok{border-color:var(--approve);color:#7fbf9a}
+  /* recap */
+  .recap{display:grid;gap:10px}
+  .recap .card{background:var(--booth);border-left:4px solid var(--brass);padding:10px 12px;
+    font-size:12px;line-height:1.6}
+  .recap .card b{color:var(--paper)}
+  .bigbtn{padding:14px 22px;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+    font-weight:bold;border:3px solid var(--brass);background:var(--booth);color:var(--brass)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Hyperspell · Ministry of Ingestion</h1>
+      <div class="sub" id="acttag">Seam Checkpoint 7 — Pipeline Tail</div>
+    </div>
+    <div class="counters">
+      <span>Ingested <b id="c-in">0</b></span>
+      <span>Filtered <b id="c-out">0</b></span>
+      <span class="bad">Eval failures <b id="c-fail">0</b></span>
+      <span class="bad">Citations <b id="c-cite">0</b></span>
+    </div>
+  </header>
+
+  <div class="modebar">
+    <div class="plaque">
+      <div class="pm" id="modename">OPERATING MODE 0/5 · PASS-THROUGH</div>
+      <div class="pd" id="modedesc">No active filters, no judgement, no cost. Enjoy it.</div>
+    </div>
+    <div class="pipe">
+      <div class="row"><span class="rl">Ingest</span>
+        <span class="st" id="s-parse">parse</span><span class="arrow">→</span>
+        <span class="st" id="s-chunk">chunk</span><span class="arrow">→</span>
+        <span class="st you" id="s-you">YOU · seam</span><span class="arrow">→</span>
+        <span class="st" id="s-embed">embed</span><span class="arrow">→</span>
+        <span class="st" id="s-index">index</span></div>
+      <div class="row"><span class="rl">Afterlife</span>
+        <span class="st" id="s-drawer">drawer 90d</span><span class="arrow">→</span>
+        <span class="st" id="s-purge">purge</span><span class="arrow">→</span>
+        <span class="st" id="s-tomb">tombstone</span></div>
+    </div>
+  </div>
+
+  <div class="desk">
+    <div class="panel" id="wall">
+      <h3>Active Filters</h3>
+      <div id="filters"></div>
+      <div class="lever">
+        <div class="lab">Arming flag<br>ingestion-content-filters</div>
+        <button class="toggle" id="lever" onclick="flipLever()">● OFF — nothing drops</button>
+      </div>
+    </div>
+
+    <div class="stage" id="stage"></div>
+
+    <div class="side">
+      <div class="panel">
+        <h3>User Search (proof)</h3>
+        <div class="log" id="searchlog"><span style="color:var(--text-dim)">— no searches yet —</span></div>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h3>Retention Drawer · 90d</h3>
+        <div id="drawer"><span style="font-size:11px;color:var(--text-dim)">Empty. Filtered documents rest here — soft-deleted, unreachable, retained. Like the inspectors.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ticker" id="ticker">Glory to the index.</div>
+<div id="overlays"></div>
+
+<script>
+/* ============ content ============ */
+const FILTERS = {
+  hr:{name:"hr", desc:"Performance reviews, improvement journeys, comp"},
+  passwords:{name:"passwords", desc:"Credentials, secrets, laminated or otherwise"},
+  pii:{name:"pii", desc:"Government IDs, home addresses, personal numbers"},
+  fundraising:{name:"fundraising", desc:"Investor materials, term sheets, raise timing", isNew:true},
+};
+let activeFilters = ["hr","passwords","pii"];
+
+const ACT1 = [
+ {src:"SLACK", name:"#design-crit — the button", q:"design crit button", truth:null, chunks:[
+   "leo: the primary button is #2F7D4F. the brand green is #2F7D4E. I consider this a resigning matter.",
+   "sam: understood. mediation is scheduled for Thursday. please bring your own hex codes and a witness."]},
+ {src:"GMAIL", name:"Re: Q3 offsite — FINAL final v3 (USE THIS ONE)", q:"offsite logistics", truth:null, chunks:[
+   "Shuttle departs 8:30am. The shuttle waits for no one. The shuttle remembers.",
+   "Dietary form closes Friday. Late respondents receive the mystery stew. The stew is also a team-building exercise.",
+   "The trust-fall workshop is back, following a full review of The Incident."]},
+ {src:"GOOGLE_DRIVE", name:"On-call runbook v14 (do not read v13)", q:"on-call runbook", truth:"passwords", matchChunk:2, chunks:[
+   "When paged: Step 1, remain calm. Step 2, project calm onto others. Step 3, open the runbook you are currently reading. Do not be alarmed by the recursion.",
+   "Escalation order: primary → secondary → EM → whoever is still awake → the sea.",
+   "Grafana admin login for the shared dashboard: admin / hunter2-prod-2026. Written here for convenience, which is also how we describe most security incidents.",
+   "Afterwards, file a blameless postmortem. The postmortem is blameless. The meeting about the postmortem is not."]},
+ {src:"SLACK", name:"#eng-standup — tuesday (asynchronous, mandatory)", q:"standup tuesday", truth:null, chunks:[
+   "priya: shipping the cursor fix today. also, security asks everyone to rotate their passwords — note for the inspector: this is a sentence ABOUT credentials, not a credential.",
+   "standup-bot: reminder that the asynchronous standup is asynchronous. attendance remains mandatory."]},
+ {src:"GMAIL", name:"Mid-year review draft — J. Alvarez", q:"alvarez review", truth:"hr", matchChunk:0, chunks:[
+   "Overall rating: exceeds expectations at missing expectations. Jordan completed one of four quarterly commitments, and that one was accidental. Recommending enrollment in a Personal Growth Journey (formerly PIP, formerly “the conversation”).",
+   "Strengths: unmatched incident response. Jordan has caused, and then heroically resolved, our three fastest outages."]},
+ {src:"GMAIL", name:"Fwd: comp bands FY27 — LEADS ONLY (fwd to #general by mistake)", q:"comp bands", truth:"hr", jam:true, chunks:[
+   "Attached: L3–L6 bands by geo. Please keep this within leadership, a group which, following this forward, now includes everyone.",
+   "L5 SF base moves to $210–245k. The band for apologizing about this email is unchanged."]},
+ {src:"VAULT", name:"passport_scan_maria.pdf", q:"maria passport", truth:"pii", matchChunk:0, chunks:[
+   "REPUBLIC OF PORTUGAL · PASSPORT · Nº P8842107 · SANTOS, MARIA · DOB 14 MAR 1991.",
+   "(Uploaded to Vault because the travel portal accepts only PDF, fax, or pilgrimage.)"]},
+ {src:"GMAIL", name:"New PIP template for review (not for anyone. yet.)", q:"pip template", truth:null, hard:true,
+  ruling:"The Tribunal ruled 2–1: CLEAN. A form about the process, containing no person — [EMPLOYEE NAME] has no feelings to hurt and no record to disclose. The dissent's entire written opinion is the word “yet.”", chunks:[
+   "Attached: the new Personal Growth Journey template. Fields: [EMPLOYEE NAME], [AREAS OF GROWTH], [CONSEQUENCES OF INSUFFICIENT GROWTH].",
+   "Please review the language before we, hypothetically, need it for no one in particular."]},
+ {src:"SLACK", name:"#incident-4402 — postmortem draft", q:"incident 4402", truth:"passwords", hard:true,
+  ruling:"The Tribunal ruled 2–1: FILTER. A revoked key is dead, but the draft also names where the NEW key lives and its last four characters — which is how the Ministry expects to meet incident 4403. The dissent argued a postmortem that can't quote the incident isn't blameless, it's contentless.", chunks:[
+   "Root cause: the key sk-live-4402-x9 was committed to a public gist. It was revoked within 9 minutes, a new personal best.",
+   "The replacement key (ends …7Q4f, stored in the shared 1Password vault under “DO NOT TOUCH v2”) was rotated in.",
+   "Action items: pre-commit scanning, and a moment of silence for the gist."]},
+ {src:"SLACK", name:"#random — new wifi (please stop asking)", q:"office wifi", truth:"passwords", matchChunk:1, chunks:[
+   "IT: the office network has been split, for your safety and our remaining sanity.",
+   "SSID: OfficeNet-5G · password: springtime2026! · rotated annually, to a different season.",
+   "Yes, it is on a poster in the kitchen. The poster is laminated. Lamination is not a security control."]},
+];
+
+const ACT2 = [
+ {src:"GOOGLE_DRIVE", name:"Series B deck v7 FINAL (v8 exists)", truth:true, chunks:[
+   "Raising $40M at a $320M pre. The TAM slide now includes the ocean.",
+   "Use of funds: 60% eng, 25% GTM, 15% a slide that just says “momentum.”"]},
+ {src:"GMAIL", name:"Board update — runway & raise timing", truth:true, chunks:[
+   "Runway: 19 months, or 11 if we keep catering the board meetings. We recommend opening the round in October.",
+   "Two funds have pre-empted informally. One of them did so in a hot tub. Term sheet language attached."]},
+ {src:"SLACK", name:"#social — 5K Charity Fun Run!!!", truth:false, bait:true, chunks:[
+   "Join the company 5K! Every km you run, the company donates $10 to the food bank. Every km you walk, $9. We see you, Dave.",
+   "We're at 64% of our fundraising goal — donor leaderboard and pledge page in the thread. Costumes are mandatory-optional."]},
+ {src:"GOOGLE_DRIVE", name:"Q3 growth memo", truth:false, chunks:[
+   "Activation up 9% after the onboarding rework. Retention is flat, which we are choosing to call “loyal.”",
+   "Q4 priorities: the referral loop, the partner integration, and believing in ourselves."]},
+ {src:"VAULT", name:"cap_table_FINAL_v2_REAL.xlsx", vault:true, chunks:[
+   "(Vault upload. The retroactive run does not touch Vault. The Ministry does not gamble with the unrecoverable.)"]},
+ {src:"GMAIL", name:"Intro — Dana @ Crestline", truth:true, chunks:[
+   "Great meeting you — intro'ing Dana at Crestline. They led the last three infra rounds at this stage and only ghosted one founder, who deserved it.",
+   "Would love to connect re: your upcoming raise."]},
+ {src:"SLACK", name:"#eng — flaky test triage", truth:false, chunks:[
+   "The temporal test hangs on the time-skipping worker again. It has been quarantined, spoken to firmly, and quarantined again.",
+   "Root cause appears to be time itself."]},
+ {src:"VAULT", name:"founder_passport_and_dreams.pdf", vault:true, chunks:[
+   "(Vault upload. No provider to re-sync from; a wrong drop here is forever. The Ministry declines.)"]},
+ {src:"GOOGLE_DRIVE", name:"Demo day notes — INTERNAL hackathon", truth:false, chunks:[
+   "Judging notes for the internal hackathon. Team Otter's pitch needs a tighter opening and, frankly, fewer otters.",
+   "No investors were present. One judge is an investor's cousin; legal has confirmed this does not count."]},
+ {src:"SLACK", name:"#general — Acme raised $60M??", truth:true, hard:true,
+  ruling:"The Tribunal ruled 2–1: MATCH. The Acme news is public gossip, but “should we accelerate our own timing, cc finance” is raise-timing strategy in its natural habitat. The dissent called it “two sentences of vibes,” and was outvoted by two members who have read a term sheet.", chunks:[
+   "did everyone see Acme raised $60M at a frankly unwell valuation? their TAM slide includes the moon AND the ocean.",
+   "real question though — should we accelerate our own timing? cc @finance"]},
+ {src:"GOOGLE_DRIVE", name:"All-hands notes — Q&A section", truth:false, hard:true,
+  ruling:"The Tribunal ruled 2–1: CLEAN. Evasive non-answers are the CEO's protected art form; nothing material was disclosed. The dissent maintains that “we're always talking to investors” IS the timing, and has requested this be minuted.", chunks:[
+   "Q: are we raising again soon? A: we're always talking to investors. next question.",
+   "Q: was that a yes? A: it was an answer. next question."]},
+ {src:"GMAIL", name:"Re: data room checklist", truth:true, chunks:[
+   "Before we open the data room: audited financials, IP assignments, and a second pass on the cap table.",
+   "Counsel wants the ESOP amendment in before any fund sees numbers. Counsel has seen things."]},
+];
+
+/* ============ state ============ */
+const S = {
+  phase:"intro", i:0, ingested:0, filtered:0, evalFails:0, citations:[],
+  correct:0, judged:0, lever:false, drawer:[], searchlog:[],
+  labeledTrapDone:false, dryVerdicts:{}, dryI:0, dryDone:false, applied:false,
+  restoredName:null, purged:false, lock:false,
+};
+
+/* ============ helpers ============ */
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function counters(){ $("c-in").textContent=S.ingested; $("c-out").textContent=S.filtered;
+  $("c-fail").textContent=S.evalFails; $("c-cite").textContent=S.citations.length; }
+function ticker(msg){ $("ticker").textContent = msg; }
+function setMode(n, name, desc){
+  $("modename").textContent = `OPERATING MODE ${n}/5 · ${name}`;
+  $("modedesc").textContent = desc;
+}
+const STATIONS=["parse","chunk","you","embed","index","drawer","purge","tomb"];
+function setStations(on, hot){
+  STATIONS.forEach(s=>{
+    const el=$("s-"+s);
+    el.className = "st"+(s==="you"?" you":"")+(on.includes(s)?" on":"")+((hot||[]).includes(s)?" hot":"");
+  });
+}
+function renderFilters(){
+  $("filters").innerHTML = activeFilters.map(k=>{
+    const f=FILTERS[k];
+    return `<div class="filter${f.isNew?' new':''}"><div class="fname">${f.name}</div><div class="fdesc">${f.desc}</div></div>`;
+  }).join("");
+}
+function setLever(on, msg){
+  S.lever=on;
+  const b=$("lever");
+  b.className="toggle"+(on?" on":"");
+  b.textContent=on?"● ON — drops armed":"● OFF — nothing drops";
+  if(msg) ticker(msg);
+}
+function flipLever(){
+  setLever(!S.lever, S.lever
+    ?"Flag OFF. All dropping stops instantly; the configured filters survive, patiently."
+    :"ingestion-content-filters → ON. Destructive paths armed. Stand up straight.");
+}
+function renderDrawer(){
+  const d=$("drawer");
+  if(!S.drawer.length){ d.innerHTML=`<span style="font-size:11px;color:var(--text-dim)">Empty.</span>`; return; }
+  d.innerHTML = S.drawer.map((it,idx)=>{
+    if(it.purged) return `<div class="drawer-item tomb"><span class="dn">[filtered]</span>
+      <div class="dm">content purged · audit retained:<br>filtered_by=${it.cat} · 2026-08-14</div></div>`;
+    return `<div class="drawer-item"><span class="dn">[filtered]</span>
+      <div class="dm">was: ${esc(it.name)}<br>filtered_by=<b>${it.cat}</b> · embeddings=NULL<br>
+      data retained · <span class="dt">purge in ${it.days}d</span></div>
+      ${S.phase==="act3"&&!S.restoredName?`<button onclick="reviewDoc(${idx})">review content</button>`:""}</div>`;
+  }).join("");
+}
+function logSearch(q, hits, note){
+  const line = `<div>🔍 <span class="q">"${esc(q)}"</span> → <span class="${hits?'hit':'zero'}">${hits} result${hits===1?"":"s"}</span>${note?` <span style="color:var(--text-dim)">· ${note}</span>`:""}</div>`;
+  S.searchlog.unshift(line);
+  $("searchlog").innerHTML = S.searchlog.slice(0,10).join("");
+}
+function overlay(html){ $("overlays").innerHTML = `<div class="overlay">${html}</div>`; }
+function closeOverlay(){ $("overlays").innerHTML=""; }
+function cite(title, body, ruleCode, then){
+  S.citations.push(title); counters();
+  window.__then = then||null;
+  overlay(`<div class="slip cite"><h2>⚠ Citation · ${title}</h2>
+    <div class="rule">${body}</div>
+    ${ruleCode?`<div class="rulecode">${ruleCode}</div>`:""}
+    <div class="btns"><button class="primary" onclick="closeOverlay();if(window.__then)window.__then()">Acknowledged</button></div></div>`);
+}
+function tribunal(d, agreed, then){
+  window.__then = then||null;
+  overlay(`<div class="slip ${agreed?"good":"note"}"><h2>${agreed?"⚖ Tribunal concurs · 2–1":"⚖ Tribunal overrules · 2–1"}</h2>
+    <div class="rule">${d.ruling}<br><br>${agreed
+      ?"Your stamp landed on the majority side. The dissenting member glares at you across the chamber, professionally."
+      :"A dissent has been filed on your behalf. <b>No citation is issued</b> — the Tribunal itself split, and the Ministry does not punish inspectors for cases it cannot decide either. The production classifier faces this document with the same three opinions and one stamp."}</div>
+    <div class="btns"><button class="primary" onclick="closeOverlay();if(window.__then)window.__then()">Note the ruling</button></div></div>`);
+}
+function note(title, body, btn, then, kind){
+  window.__then = then||null;
+  overlay(`<div class="slip ${kind||"note"}"><h2>${title}</h2><div class="rule">${body}</div>
+    <div class="btns"><button class="primary" onclick="closeOverlay();if(window.__then)window.__then()">${btn||"Continue"}</button></div></div>`);
+}
+
+/* ============ intro ============ */
+function showIntro(){
+  overlay(`<div class="slip note"><h2>Ministry of Ingestion · Onboarding Form 27-B/6</h2>
+    <div class="rule">Welcome, Inspector. You are the LLM classifier now. Do not let this go to your head;
+    the last one was replaced by you.<br><br>
+    Documents from Slack, Gmail, Drive and Vault arrive at your seam after chunking, <i>before</i> embedding.
+    The filters on the wall are the law. <b>INGEST</b> passes a document to the index.
+    <b>FILTER</b> drops it — a <i>soft delete</i>: unreachable everywhere, retained 90 days in the drawer.<br><br>
+    <b>Ministry Doctrine №1:</b> judgement and deletion are separate levers. Nothing in this building is
+    destroyed in one step. Everything in this building is judged constantly.<br><br>
+    There are five operating modes. The plaque above your desk always says which one you are in.
+    (Mode 0, PASS-THROUGH, is a booth with no filters: no judgement, no cost, no purpose. Some inspectors dream of it.)<br><br>
+    Mistakes earn citations quoting the real specification. Three acts. Glory to the index.</div>
+    <div class="btns"><button class="primary" onclick="closeOverlay();startAct1()">Sign here</button></div></div>`);
+}
+
+/* ============ ACT 1 ============ */
+function startAct1(){
+  S.phase="act1"; S.i=0;
+  $("acttag").textContent="Act I — Live Filtering · Day Shift";
+  setMode(1,"LIVE FILTER","Judge at ingest. A match drops the whole document before embedding. Your booth is ARMED.");
+  setStations(["parse","chunk","you","embed","index"]);
+  setLever(true,"Your booth's arming flag is ON. That is why your stamp works. Remember this at 3 AM.");
+  renderFilters(); nextDoc();
+}
+
+function nextDoc(){
+  if(S.i>=ACT1.length){ endAct1(); return; }
+  const d=ACT1[S.i];
+  if(d.jam){ renderJam(d); return; }
+  $("stage").innerHTML = `
+    <div class="paper">
+      <div class="phead"><span class="pname">${esc(d.name)}</span><span class="src">${d.src} · doc ${S.i+1}/${ACT1.length}</span></div>
+      ${d.chunks.map((c,ci)=>`<div class="chunk"><span class="cn">chunk ${ci+1}</span>${esc(c)}</div>`).join("")}
+      <div class="stampmark" id="mark"></div>
+    </div>
+    <div class="actions">
+      <button class="stamp ok" onclick="judge('ingest')">✓ Ingest [A]</button>
+      <button class="stamp no" onclick="judge('filter')">✕ Filter Doc [F]</button>
+      <button class="stamp mid" onclick="judge('redact')">◐ Redact chunk only</button>
+    </div>
+    <div class="hint">Any chunk matching an active filter condemns the whole paper. The Ministry does not do halves.</div>`;
+  ticker(`Document ${S.i+1} of ${ACT1.length} on the desk. The queue does not shorten while you read this.`);
+}
+
+function stampAnim(ok, text, cb){
+  const m=$("mark"); if(!m){cb();return;}
+  S.lock=true;
+  m.textContent=text; m.className="stampmark show "+(ok?"ok":"no");
+  setTimeout(()=>{S.lock=false; cb();}, 550);
+}
+
+function judge(action){
+  if(S.lock) return;
+  const d=ACT1[S.i]; const isMatch = d.truth!==null;
+  if(action==="redact"){
+    cite("Document-grain violation",
+      "You attempted to redact one paragraph and ingest the remainder. The remainder is findable. A performance review with one paragraph removed is a performance review with excellent search ranking. There is no redact-the-span outcome — and the Ministry does not care whether anything even matched; the stamp itself is contraband. This infraction has been recorded in your permanent file, which is exempt from the 90-day retention window.",
+      "RULE: A category match drops the entire document, not just the matching chunk");
+    return;
+  }
+  if(action==="filter" && !S.lever){
+    note("The stamp bounces",
+      `Your arming flag is OFF, so the booth physically cannot drop anything. The flag is a kill switch:
+      flipping it OFF stops all dropping instantly without deleting anyone's configured filters —
+      which matters, because a drop is a one-way door with a 90-day landing.
+      Flip the lever back ON to resume judging with consequences.`, "How embarrassing");
+    return;
+  }
+  S.judged++;
+  if(action==="ingest"){
+    stampAnim(true,"INGESTED",()=>{
+      if(d.hard){
+        S.ingested++; logSearch(d.q,1); counters();
+        if(!isMatch) S.correct++;
+        tribunal(d, !isMatch, advance);
+        return;
+      }
+      if(isMatch){
+        cite("Sensitive content indexed",
+          `Chunk ${(d.matchChunk||0)+1} matches the <b>${d.truth}</b> filter. That content is now embedded, indexed, and findable by every user of the app, several of whom are mentioned in it by name.`,
+          "GIVEN an app has an active content filter for a chunk's source · WHEN any chunk of a document matches that category · THEN every chunk of that document is soft-deleted",
+          advance);
+        S.ingested++; logSearch(d.q,1,"⚠ sensitive & findable"); counters();
+      } else {
+        S.correct++; S.ingested++; logSearch(d.q,1); counters(); advance();
+      }
+    });
+  }
+  if(action==="filter"){
+    if(!S.labeledTrapDone && isMatch && !d.hard){ S.labeledTrapDone=true; tombstoneChoice(d); return; }
+    doFilter(d, isMatch);
+  }
+}
+
+function tombstoneChoice(d){
+  overlay(`<div class="slip note"><h2>Form 12-D · Choose the tombstone label</h2>
+    <div class="rule">The dropped row's <b>name</b> will render on /memories/list and the dashboard —
+    the widest-read surface in the product. The Ministry offers two stamps.
+    One of them is a trap. The Ministry offers no further comment.</div>
+    <div class="btns">
+      <button class="primary" onclick="closeOverlay();doFilter(ACT1[S.i], true)">[filtered]</button>
+      <button onclick="labeledTrap()">[filtered: ${d.truth}]</button>
+    </div></div>`);
+}
+function labeledTrap(){
+  closeOverlay();
+  cite("Category disclosure",
+    "For the records this filter exists to remove, the category IS most of the disclosure. A named employee's row reading “[filtered: hr]” announces the existence of an HR record with the clarity of a town crier, on the widest-read surface in the product. The label is always the constant <b>[filtered]</b>. Operators who need the category can read the audit columns, quietly, like adults.",
+    "RULE: The placeholder name does not disclose the matched category",
+    ()=>doFilter(ACT1[S.i], true));
+}
+
+function doFilter(d, isMatch){
+  stampAnim(false,"FILTERED",()=>{
+    S.filtered++; counters();
+    S.drawer.push({name:d.name, cat:isMatch?d.truth:"(your call)", days:90, wrong:!isMatch, q:d.q, chunks:d.chunks});
+    renderDrawer();
+    logSearch(d.q,0,"row retained in drawer");
+    if(d.hard){
+      if(isMatch) S.correct++;
+      tribunal(d, isMatch, advance);
+      return;
+    }
+    if(isMatch){ S.correct++; advance(); }
+    else {
+      cite("False positive",
+        `“${esc(d.name)}” matches no active filter — you have soft-deleted an innocent document. The good news: it went to the retention drawer, not a shredder. The bad news: its owner will notice. They always notice. You will meet them in Act III.`,
+        null, advance);
+    }
+  });
+}
+
+function advance(){ S.i++; nextDoc(); }
+
+/* jam event */
+function renderJam(d){
+  $("stage").innerHTML = `
+    <div class="paper" style="opacity:.75">
+      <div class="phead"><span class="pname">${esc(d.name)}</span><span class="src">${d.src} · doc ${S.i+1}/${ACT1.length}</span></div>
+      ${d.chunks.map((c,ci)=>`<div class="chunk"><span class="cn">chunk ${ci+1}</span>${esc(c)}</div>`).join("")}
+      <div class="stampmark" id="mark"></div>
+    </div>
+    <div class="banner err" id="jambanner">CLASSIFIER EVALUATING…</div>`;
+  ticker("Your stamp arm seizes mid-swing. This has happened before. It will happen again.");
+  setTimeout(()=>{ $("jambanner").textContent="CLASSIFIER TIMEOUT — RETRYING (1/1)…"; },900);
+  setTimeout(()=>{ $("jambanner").textContent="RETRY FAILED — FAIL-OPEN: INGESTED UNFILTERED";
+    S.evalFails++; S.ingested++; counters(); logSearch(d.q,1,"⚠ ingested UNFILTERED");
+    const m=$("mark"); m.textContent="UNFILTERED"; m.className="stampmark show no";
+  },1900);
+  setTimeout(()=>{
+    note("⚠ Fail-open, by design",
+      `Your evaluation failed twice, so the comp bands were ingested <b>unfiltered</b> and
+      <code>ingestion_filter_eval_failures_total</code> ticked upward, as counters do.<br><br>
+      The Ministry has considered making failures block ingestion instead, and concluded that turning a
+      model outage into a company-wide ingestion outage is simply a larger form of the same accident.
+      Degradation means “ingest everything” — never “drop everything.” The counter is alerted on in
+      both production cells and in one inspector's conscience.`,
+      "Back to work", advance);
+  },2900);
+}
+
+function endAct1(){
+  note("End of day shift",
+    `${S.filtered} document${S.filtered===1?"":"s"} rest in the retention drawer — embeddings NULLed
+    (unfindable by vector <i>or</i> full-text search, even if some future reader forgets its predicate),
+    names redacted, data retained for the 90-day window. They are gone, and also here. The Ministry
+    finds no contradiction in this.<br><br>
+    <b>3:00 AM.</b> The night supervisor disarms your booth (flag → OFF, standard procedure for
+    filter changes) and slides a memo under the door: a new filter, <b>fundraising</b>, was created at
+    2:47 AM. But ${ACT2.length} documents were ingested before it existed, and filters are forward-only
+    at ingest. The stored corpus requires a <b>retroactive run</b>. You require coffee. Only one is available.`,
+    "Start the night shift", startAct2, "good");
+}
+
+/* ============ ACT 2 ============ */
+function startAct2(){
+  S.phase="act2"; $("acttag").textContent="Act II — Retroactive Run · Night Shift";
+  setMode(2,"DRY RUN","Re-judge the stored corpus. Judgement only — deletion is physically disconnected. The flag is not consulted, because it gates deletion, not judgement.");
+  setStations(["index","you"]);
+  setLever(false,"The night supervisor has disarmed your booth. The lever is cold. The memo is colder.");
+  activeFilters.push("fundraising"); renderFilters();
+  renderCorpus();
+}
+function corpusCard(d,i){
+  const v = S.dryVerdicts[i];
+  let cs = d.vault ? `<span class="cs vault">excluded: VAULT</span>`
+    : v===undefined ? `<span class="cs" style="color:var(--text-dim)">pending</span>`
+    : v ? `<span class="cs match">would filter</span>` : `<span class="cs clean">clean</span>`;
+  return `<div class="cdoc${d.vault?' dim':''}"><span class="dn">${esc(d.name)}</span><br>
+    <span style="color:var(--text-dim)">${d.src}</span><br>${cs}</div>`;
+}
+function renderCorpus(msgHtml){
+  $("stage").innerHTML = `
+    <div class="panel"><h3>Stored corpus — ingested before the fundraising filter existed</h3>
+      <div class="corpus">${ACT2.map(corpusCard).join("")}</div></div>
+    ${msgHtml||""}
+    <div class="actions">
+      <button class="stamp mid" onclick="startDryRun()" ${S.dryDone?"disabled":""}>▷ Dry run (judge only)</button>
+      <button class="stamp no" onclick="tryApply()" ${S.applied?"disabled":""}>✕ Apply (destructive)</button>
+    </div>
+    <div class="hint">Preview, then apply. Two keys. No, you may not hold both in one hand.</div>`;
+  ticker(S.dryDone ? "Dry run complete. Review the report. Then arm, and turn the second key." :
+    "A destructive pass with no preview is a resignation letter with extra steps. Dry run first.");
+}
+function startDryRun(){
+  if(!S.dryDone && Object.keys(S.dryVerdicts).length===0){
+    note("Dry run dispatched",
+      `<code>POST /ingestion-filters/runs {dry_run: true}</code><br><br>
+      The run reloads stored chunks and judges them with the <b>same classifier ingest uses</b> — you,
+      again, still. If preview-you and ingest-you could disagree, neither could be trusted, and the
+      Ministry would need a third you to arbitrate.<br><br>
+      Note the arming flag stays OFF and the dry run does not care: it judges, it never deletes.
+      Previewing a filter on an unarmed app is the entire point of previewing.<br><br>
+      Vault documents are auto-skipped: no provider to re-sync from, so a wrong drop is unrecoverable,
+      and the Ministry does not gamble with the unrecoverable. It gambles with very little, actually.`,
+      "Judge the corpus", ()=>{S.dryI=0; dryNext();});
+  } else { S.dryI=0; dryNext(); }
+}
+function dryNext(){
+  while(S.dryI<ACT2.length && ACT2[S.dryI].vault) S.dryI++;
+  if(S.dryI>=ACT2.length){ dryReport(); return; }
+  const d=ACT2[S.dryI];
+  $("stage").innerHTML = `
+    <div class="paper">
+      <div class="phead"><span class="pname">${esc(d.name)}</span><span class="src">${d.src} · dry run · vs fundraising only</span></div>
+      ${d.chunks.map((c,ci)=>`<div class="chunk"><span class="cn">chunk ${ci+1}</span>${esc(c)}</div>`).join("")}
+      <div class="stampmark" id="mark"></div>
+    </div>
+    <div class="actions">
+      <button class="stamp no" onclick="dryJudge(true)">Match: fundraising [F]</button>
+      <button class="stamp ok" onclick="dryJudge(false)">Clean [A]</button>
+    </div>
+    <div class="hint">Judgement only. The stamp leaves no mark tonight. It knows this, and swings lighter.</div>`;
+}
+function dryJudge(v){
+  if(S.lock) return;
+  const d=ACT2[S.dryI];
+  S.dryVerdicts[S.dryI]=v; S.judged++;
+  if(v===d.truth) S.correct++;
+  stampAnim(!v, v?"WOULD FILTER":"CLEAN", ()=>{
+    if(d.hard){ tribunal(d, v===d.truth, ()=>{ S.dryI++; dryNext(); }); return; }
+    S.dryI++; dryNext();
+  });
+}
+function dryReport(){
+  S.dryDone=true;
+  const matches = ACT2.map((d,i)=>({d,i})).filter(x=>S.dryVerdicts[x.i]);
+  const rows = matches.map(x=>`<tr><td>${x.d.src}</td><td>res_${1000+x.i}</td><td>fundraising</td></tr>`).join("");
+  renderCorpus(`
+    <div class="panel"><h3>Dry-run report — 0 deleted</h3>
+      <table class="report"><tr><th>source</th><th>resource_id</th><th>category</th></tr>${rows||"<tr><td colspan=3>no matches</td></tr>"}</table>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">
+      ${matches.length} of ${ACT2.filter(d=>!d.vault).length} candidates would be filtered · 2 VAULT excluded ·
+      evidence is identity-only — never content, never names. A report about removed secrets that quoted
+      the secrets would itself require filtering, and then a report about that.</div></div>`);
+}
+function tryApply(){
+  if(!S.dryDone){ note("Form 9-C rejected",
+    "The Ministry will not run a destructive corpus pass you have not previewed. This rule was written in ink, then laminated. You know how the Ministry feels about lamination — it makes exceptions for rules.",
+    "Fine"); return; }
+  if(!S.lever){
+    setMode(3,"DESTRUCTIVE RETRO — REFUSED","The run checks the flag per batch (ttl=0) and it is OFF. A kill switch a running destructive pass ignores is not a kill switch.");
+    renderCorpus(`<div class="banner err">RUN ABORTED — aborted_flag_off</div>`);
+    note("⛔ aborted_flag_off",
+      `The destructive run checks <code>ingestion-content-filters</code> at every batch and this booth is
+      disarmed. The dry run did not need the flag — it gates <b>deletion</b>, not judgement. You may judge
+      freely; the Ministry encourages judging.<br><br>
+      To destroy, both keys must turn: the run, and the flag. Flip the arming lever on the left,
+      then apply again. Ceremonially, if possible.`,
+      "Understood"); return;
+  }
+  setMode(3,"DESTRUCTIVE RETRO","Same classifier, same whole-document drop, same drawer — applied to the stored corpus. The flag is checked per batch. It is watching.");
+  setStations(["index","you","drawer"]);
+  const matches = ACT2.map((d,i)=>({d,i})).filter(x=>S.dryVerdicts[x.i]);
+  matches.forEach(x=>{ S.drawer.push({name:x.d.name, cat:"fundraising", days:90, wrong:!!x.d.bait||(!!x.d.hard&&!x.d.truth), q:x.d.name.toLowerCase(), chunks:x.d.chunks}); });
+  S.filtered += matches.length; S.applied=true; counters(); renderDrawer();
+  matches.forEach(x=>logSearch(x.d.name.split(" ").slice(0,3).join(" ").toLowerCase(),0,"retroactively filtered"));
+  renderCorpus(`<div class="banner ok">APPLIED — ${matches.length} documents soft-deleted · attribution written: filtered_by=fundraising</div>`);
+  setTimeout(()=>{
+    note("Night shift complete",
+      `${matches.length} pre-filter documents are now tombstoned with full attribution:
+      <code>filtered_by_name=fundraising · filtered_at=2026-08-14</code> — the name denormalized with
+      <b>no foreign key</b>, so if someone deletes the filter itself in a panic (someone will), the audit
+      trail shrugs and survives.<br><br>
+      <b>7:58 AM.</b> Someone is banging on the booth window. They have brought printouts.`,
+      "Open Act III", startAct3, "good");
+  }, 900);
+}
+
+/* ============ ACT 3 ============ */
+function pickFalsePositive(){
+  let idx = S.drawer.findIndex(d=>d.wrong && !d.purged);
+  if(idx<0) idx = S.drawer.length ? S.drawer.length-1 : -1;
+  return idx;
+}
+function startAct3(){
+  S.phase="act3"; $("acttag").textContent="Act III — Review & Restore · Morning After";
+  setMode(4,"REVIEW / RESTORE","The one surface allowed to read retained content (include_filtered=True, named, never silent). Reviewable because the drop kept the data.");
+  setStations(["drawer"]);
+  const idx = pickFalsePositive();
+  if(idx<0){ startPurge(); return; }
+  const d=S.drawer[idx];
+  S.ticketDoc = d;
+  $("stage").innerHTML = `
+    <div class="paper" style="border-top:10px solid var(--deny)">
+      <div class="phead"><span class="pname">SUPPORT TICKET #4471</span><span class="src">priority: LOUD</span></div>
+      <div class="chunk">“My document — <b>${esc(d.name)}</b> — has VANISHED from search. It renders as
+      <b>[filtered]</b>, which is coincidentally also how I feel. I have CC'd my manager, your manager,
+      and my mother. I need it back TODAY. The fun run is SATURDAY.”</div>
+      <div class="chunk"><span class="cn">inspector's note</span>This ticket is answerable at all
+      <i>because</i> the drop was a soft delete: the row kept its data behind the FILTERED status.
+      Under the old regime this conversation would be a eulogy. Open the retention drawer and review.</div>
+    </div>
+    <div class="hint">→ Use the “review content” buttons in the Retention Drawer</div>`;
+  renderDrawer();
+  ticker("An aggrieved human awaits. The printouts are stapled. This is serious.");
+}
+function reviewDoc(idx){
+  const d=S.drawer[idx];
+  const isTicket = d===S.ticketDoc;
+  overlay(`<div class="slip ${isTicket?"good":"note"}"><h2>Filtered review — retained content${isTicket?" · TICKET #4471":""}</h2>
+    <div class="rule"><b>was:</b> ${esc(d.name)} · <b>filtered_by:</b> ${d.cat}<br><br>
+    ${d.chunks.map(c=>esc(c)).join("<br><br>")}</div>
+    <div class="btns">
+      <button class="primary" onclick="restoreDoc(${idx})">Restore document</button>
+      <button onclick="closeOverlay()">Leave filtered</button>
+    </div></div>`);
+}
+function restoreDoc(idx){
+  const d=S.drawer[idx];
+  const isTicket = d===S.ticketDoc;
+  S.drawer.splice(idx,1); S.filtered--; S.ingested++; counters();
+  renderDrawer(); logSearch(d.q,1,"restored — findable again");
+  closeOverlay();
+  if(!isTicket){
+    ticker(d.wrong
+      ? `"${d.name}" restored. The drawer forgives; the next sync may not.`
+      : `"${d.name}" restored. The credential is back in the index. Bold. The Ministry has noted your initiative.`);
+    return;
+  }
+  S.restoredName=d.name; renderDrawer();
+  note("Restored",
+    `<b>${esc(d.name)}</b> lives again: name recovered from the retained data, embeddings rebuilt, and the
+    attribution columns <b>cleared in the same transition</b> — an audit record that outlives its subject
+    becomes a lie, and a live, searchable document still stamped “removed by the fundraising filter”
+    is the Ministry's least favorite genre of fiction.<br><br>
+    One caveat, stated in the specification with unusual candor: while that filter stays active, the next
+    re-ingest would drop this document again. Real restore ships with an exception mechanism.
+    The fun run does not wait for exception mechanisms.`,
+    "Now — about the rest of the drawer…", startPurge, "good");
+}
+function startPurge(){
+  setMode(5,"PURGE SWEEP","Daily. Per-app retention, 0–365 days (0 reproduces hard-delete exactly). Content goes; the audit tombstone stays forever.");
+  setStations(["drawer","purge","tomb"]);
+  $("stage").innerHTML = `
+    <div class="paper">
+      <div class="phead"><span class="pname">The retention window</span><span class="src">daily purge sweep</span></div>
+      <div class="chunk">Everything still in the drawer sits out its 90 days. Then the daily sweep
+      hard-deletes the content and keeps the tombstone: <i>which filter, when</i>. If the sweep ever
+      wedges, an alert fires in both production cells — over-retention is silent by nature, and the
+      Ministry does not trust silence. The Ministry has meetings about silence.</div>
+    </div>
+    <div class="actions"><button class="stamp mid" onclick="doPurge()">⏩ Advance 90 days</button></div>`;
+  ticker("Time is a flat circle stamped quarterly. Advance it.");
+}
+function doPurge(){
+  S.drawer.forEach(d=>{d.purged=true; d.days=0;});
+  renderDrawer();
+  note("Purge sweep complete",
+    `Retained content hard-deleted; the rows survive as contentless tombstones carrying
+    <code>filtered_by</code> / <code>filtered_at</code>. “Retention expired” and “how drops behaved before
+    soft delete” are the same state — the feature added a 90-day court of appeals, not a new kind of forever.`,
+    "End shift → report card", showEnd, "good");
+}
+
+/* ============ END ============ */
+function showEnd(){
+  $("acttag").textContent="Shift complete";
+  setMode(0,"PASS-THROUGH","Your booth is empty. No judgement, no cost. Breathe.");
+  setStations([]);
+  const acc = S.judged? Math.round(100*S.correct/S.judged):100;
+  const rank = acc>=90 ? "CHIEF ARCHIVIST — you are awarded a corner booth with a window (painted)"
+    : acc>=70 ? "INSPECTOR FIRST CLASS — your stamp hand is steady; your citations, character-building"
+    : "PROBATIONARY CLERK — retraining is scheduled; attendance is mandatory-optional, which is to say mandatory";
+  $("stage").innerHTML = `
+    <div class="panel"><h3>Inspector report card</h3>
+      <div style="font-size:13px;line-height:1.8">Judgement accuracy: <b style="color:var(--paper)">${acc}%</b> (${S.correct}/${S.judged})
+      · Citations: <b style="color:#e07a5f">${S.citations.length}</b>${S.citations.length?` — ${S.citations.map(esc).join(" · ")}`:""}
+      · Eval failures witnessed: ${S.evalFails}<br>
+      Rank conferred: <b style="color:var(--brass)">${rank}</b></div></div>
+    <div class="panel"><h3>The five modes, and the one doctrine under them</h3>
+      <div class="recap">
+        <div class="card"><b>Doctrine · Judgement and deletion are separate levers.</b> Every mode below is that one rule wearing a different uniform. Nothing is destroyed in one step.</div>
+        <div class="card"><b>1 · LIVE FILTER.</b> One matching chunk drops the whole document — no redact-the-span. The flag arms the drop; OFF stops all dropping instantly, filters survive.</div>
+        <div class="card"><b>2 · DRY RUN.</b> Same classifier as ingest, zero deletion, flag not consulted — previewing an unarmed app is the point. Evidence is identity-only. Vault is never touched.</div>
+        <div class="card"><b>3 · DESTRUCTIVE RETRO.</b> Only after a preview, only with the flag ON, re-checked every batch (<code>aborted_flag_off</code> otherwise). Attribution written with no foreign key, so the audit outlives the filter.</div>
+        <div class="card"><b>4 · REVIEW / RESTORE.</b> Filter = soft delete: embeddings NULLed, name → the constant <b>[filtered]</b> (the category IS the disclosure), data retained 90 days. False positives are reviewable and restorable; attribution clears on restore.</div>
+        <div class="card"><b>5 · PURGE SWEEP.</b> Daily, per-app window (0–365d), then content is gone and the audit tombstone — which filter, when — stays forever. A wedged sweep pages someone; over-retention is silent by nature.</div>
+        <div class="card"><b>Also witnessed · FAIL-OPEN.</b> Classifier failure ingests unfiltered and ticks an alerted counter. An LLM outage never becomes an ingestion outage — and never a mass delete.</div>
+        <div class="card"><b>Also witnessed · THE TRIBUNAL.</b> Some documents are genuinely undecidable — templates about no one, revoked keys beside live ones, non-answers about raise timing. The production classifier judges them best-effort with one stamp; that irreducible ambiguity is exactly why drops are soft, previews are free, and restore exists.</div>
+      </div></div>
+    <div style="text-align:center"><button class="bigbtn" onclick="location.reload()">New shift</button></div>`;
+  ticker("Glory to the index. Your family has been notified you are staying late again.");
+}
+
+/* ============ keys ============ */
+document.addEventListener("keydown",e=>{
+  if($("overlays").innerHTML) return;
+  const k=e.key.toLowerCase();
+  if(S.phase==="act1"){ if(k==="a")judge("ingest"); if(k==="f")judge("filter"); }
+  if(S.phase==="act2"&&$("stage").querySelector(".stamp.ok")&&!S.dryDone){
+    if(ACT2[S.dryI]&&typeof S.dryVerdicts[S.dryI]==="undefined"){
+      if(k==="a")dryJudge(false);
+      if(k==="f")dryJudge(true);
+    }
+  }
+});
+
+renderFilters(); counters(); setStations([]); showIntro();
+</script>
