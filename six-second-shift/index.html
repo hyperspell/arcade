@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bedrock Spaceteam — Arcade Shift</title>
+<title>Six-Second Shift</title>
 <style>
   :root{
     --space:#000;
@@ -244,7 +244,7 @@
 <script>
 'use strict';
 /* ============================================================
-   BEDROCK SPACETEAM MK-III — styled after the real Spaceteam:
+   SIX-SECOND SHIFT — a frantic one-crew console game:
    starfield viewport, white sentence-case orders, chartreuse
    time bar, silver stippled console, black labels, quilted red
    buttons, cracked plates over circuit board.
@@ -668,8 +668,8 @@ function showTitle(){
   clearT(); S.over=false; setMeters();
   const best=store.get('bst3-best');
   $('game').innerHTML=spaceStage(`
-    <div class="datebar">SINGLE-PLAYER SPACETEAM · FEB→AUG 2026 · ~4 MINUTES</div>
-    <h1>BEDROCK SPACETEAM</h1>
+    <div class="datebar">A CREW OF ONE · FEB→AUG 2026 · ~4 MINUTES</div>
+    <h1>SIX-SECOND SHIFT</h1>
     <p class="dim">A full console. Orders that name instruments you have never heard of.
     A timer that does not care. Click knobs to turn them, switches to flip them, buttons
     to press them — and when the ordered knob is <em>not on the console at all</em>
@@ -690,7 +690,7 @@ function showTitle(){
     CONTROLS.forEach((c,i)=>{c.folded=false; if(c.kind!=='decor'&&c.kind!=='btn') c.cur=DEFAULT_CUR[i];});
     setMeters(); startWave();
   });
-  $('foot').innerHTML='Based on a true incident at <a href="https://hyperspell.com">Hyperspell</a>: five reasonable engineering decisions, one starved summarizer, one paired config flip. The dates, knobs, and percentages are real; the dollar amounts and volumes have been replaced with outrageous ones on purpose. Built with Claude.';
+  $('foot').innerHTML='Based on a true incident at <a href="https://hyperspell.com">Hyperspell</a>: five reasonable engineering decisions, one starved summarizer, one paired config flip. The dates, knobs, and percentages are real; the dollar amounts and volumes have been replaced with outrageous ones on purpose.';
 }
 
 function startWave(){
@@ -769,7 +769,7 @@ function showVictory(){
   clearT();
   FX.barrage(9,{count:34,power:6,colors:['#B9D40B','#FFD9A0','#DDF56A','#FFFFFF']});
   const title=TITLES.find(t=>S.score>=t.min).t;
-  const share=`🕹️ BEDROCK SPACETEAM — ${title}
+  const share=`🕹️ SIX-SECOND SHIFT — ${title}
 survived to WAVE 1 · score ${S.score} · best streak ${S.best} · hull ${S.hull}%
 🔩 the knob you need is never on your panel`;
   saveBest(title);
@@ -799,7 +799,7 @@ function showGameOver(){
   FX.barrage(7,{count:50,power:8,colors:['#E8564A','#F08A1D','#FFD9A0','#C8281E']});
   const cfg=WAVES[Math.min(S.wave,WAVES.length-1)];
   const title=TITLES.find(t=>S.score>=t.min).t;
-  const share=`🕹️ BEDROCK SPACETEAM — ${title}
+  const share=`🕹️ SIX-SECOND SHIFT — ${title}
 hull breach on ${cfg.name.split('·')[0].trim()} · score ${S.score} · best streak ${S.best}
 the pager wins this round`;
   saveBest(title);
