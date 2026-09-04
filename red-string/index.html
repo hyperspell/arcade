@@ -90,14 +90,44 @@
   .pin.note.crossed .t { text-decoration: line-through; text-decoration-color: #d6202a; text-decoration-thickness: 3px; color: #8a8078; }
   .pin.question { background: #fff; width: 72px; text-align: center; font-family: var(--marker); font-size: 40px; font-weight: 900; color: #d6202a; padding: 12px 6px 2px; }
   .pin.conn { background: #e7edf6; width: 98px; } .pin.conn .t { font-size: 11px; }
-  .pin.target { cursor: pointer; outline: 3px solid var(--yellow); outline-offset: 2px; animation: pulse 1.4s ease-in-out infinite; }
-  .pin.source { outline: 3px solid #1b1b1b; outline-offset: 2px; }
-  .pin.foldable { cursor: pointer; outline: 3px dashed var(--yellow); outline-offset: 2px; }
-  .pin.gone { opacity: 0; transform: translate(-50%, 40%) rotate(25deg); pointer-events: none; }
+  .pin.target { cursor: pointer; }
+  .pin.foldable { cursor: pointer; }
+  #wall .pin.gone { opacity: 0 !important; transform: translate(-50%, 40%) rotate(25deg); pointer-events: none; }
   .pin.shake { animation: shake .5s; }
   .scrawl { position: absolute; transform: translate(-50%, -50%) rotate(var(--rot, -4deg)); font-family: var(--marker); font-weight: 900; color: #161412;
     font-size: clamp(14px, 3.4vw, 34px); letter-spacing: .04em; line-height: .95; pointer-events: none; text-shadow: 0 0 1px rgba(0,0,0,.4); opacity: .92; white-space: nowrap; }
   .scrawl.red { color: #c81e27; }
+  /* ---------- guidance: the wall shows you what to touch ---------- */
+  #wall.mode-string .pin:not(.target):not(.source), #wall.mode-fold .pin:not(.foldable), #wall.mode-cut .pin { opacity: .55; filter: saturate(.4) brightness(.92); }
+  #wall.mode-string .pin.target, #wall.mode-fold .pin.foldable { opacity: 1; filter: none; }
+  .pin.target { outline: none; box-shadow: 0 0 0 3px var(--yellow), 0 0 26px 8px rgba(242,200,75,.8), 1px 3px 7px rgba(0,0,0,.4); animation: glow 1.1s ease-in-out infinite alternate; }
+  .pin.target:hover { transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1.06); }
+  .pin.source { outline: none; box-shadow: 0 0 0 3px #fff, 0 0 30px 10px rgba(255,255,255,.75), 1px 3px 7px rgba(0,0,0,.4); }
+  .pin.foldable { outline: none; box-shadow: 0 0 0 3px var(--yellow), 0 0 26px 8px rgba(242,200,75,.8); animation: glow 1.1s ease-in-out infinite alternate, wobble 2.4s ease-in-out infinite; }
+  .pin.strung { box-shadow: 0 0 0 3px #d6202a, 0 0 18px 4px rgba(214,32,42,.6), 1px 3px 7px rgba(0,0,0,.4); }
+  .gtag { position: absolute; left: 50%; top: -22px; translate: -50% 0; white-space: nowrap; font-family: var(--marker); font-weight: 900; font-size: 13px; color: #fff;
+    background: #d6202a; padding: 1px 8px; border-radius: 2px; box-shadow: 0 2px 4px rgba(0,0,0,.5); transform: rotate(-3deg); animation: bob 1s ease-in-out infinite alternate; }
+  .gtag.y { background: var(--yellow); color: #2a2008; top: auto; bottom: -22px; animation-name: bobdown; }
+  @keyframes bobdown { from { translate: -50% 0; } to { translate: -50% 5px; } }
+  @keyframes glow { from { box-shadow: 0 0 0 3px var(--yellow), 0 0 14px 3px rgba(242,200,75,.5), 1px 3px 7px rgba(0,0,0,.4); } to { box-shadow: 0 0 0 3px var(--yellow), 0 0 30px 10px rgba(242,200,75,.95), 1px 3px 7px rgba(0,0,0,.4); } }
+  @keyframes wobble { 0%,100% { rotate: -1.5deg; } 50% { rotate: 1.5deg; } }
+  @keyframes bob { from { translate: -50% 0; } to { translate: -50% -5px; } }
+  #wall.mode-cut #strings g:not(.cuttable) .yarn { opacity: .3; } #wall.mode-cut #strings g:not(.cuttable) .shadow, #wall.mode-cut #strings g:not(.cuttable) .fuzz { opacity: .15; }
+  #strings .guide { display: none; }
+  #strings .cuttable .guide { display: block; stroke: var(--yellow); stroke-width: 6; stroke-dasharray: 12 10; stroke-linecap: butt; opacity: .85;
+    animation: ants .8s linear infinite; filter: drop-shadow(0 0 6px rgba(242,200,75,.9)); }
+  #strings .cuttable.hot .guide { stroke: #fff; stroke-dasharray: none; animation: none; filter: drop-shadow(0 0 8px #fff); }
+  #strings .cuttable.hot .yarn { stroke: #7a7269; stroke-dasharray: 2 12; }
+  #strings .cuttable .hit { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='26' font-size='26'>✂️</text></svg>") 8 8, crosshair; }
+  @keyframes ants { to { stroke-dashoffset: -22; } }
+  #strings .temp .yarn { stroke: var(--yellow); stroke-dasharray: 7 5; opacity: .9; } #strings .temp .shadow, #strings .temp .fuzz { display: none; }
+  #console .card:first-child button.primary:not(:disabled), #console .card:first-child .choices button:not(:disabled) { animation: btnpulse 1.6s ease-in-out infinite; }
+  @keyframes btnpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242,200,75,0); } 50% { box-shadow: 0 0 0 5px rgba(242,200,75,.45); } }
+  #hintnote { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; padding: 10px 14px; background: #fff2ad; color: #2a2008; border-radius: 2px;
+    box-shadow: 2px 3px 8px rgba(0,0,0,.45); font-family: var(--marker); font-size: 15px; line-height: 1.3; transform: rotate(-.6deg); position: relative; }
+  #hintnote::before { content: ''; position: absolute; left: 50%; top: -6px; width: 10px; height: 10px; border-radius: 50%; translate: -50% 0; background: radial-gradient(circle at 35% 30%, #ff7c7c, #d6202a 55%, #6e0c12); }
+  #hintnote .ic { font-size: 20px; line-height: 1; } #hintnote .cnt { margin-left: auto; font-family: var(--mono); font-size: 12px; color: #6b5a1a; white-space: nowrap; }
+  #hintnote.quiet { background: #e9e4d6; color: #5b524a; }
   @keyframes pulse { 0%,100% { outline-color: var(--yellow); } 50% { outline-color: transparent; } }
   @keyframes shake { 0%,100%{margin-left:0} 20%{margin-left:-6px} 40%{margin-left:6px} 60%{margin-left:-4px} 80%{margin-left:4px} }
   #photo { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; pointer-events: none; }
@@ -110,7 +140,7 @@
 
   #wallfoot { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; min-height: 34px; }
   #wallfoot .hint { color: var(--head); font-size: 13px; } #wallfoot .cnt { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--dim); }
-  #check { display: none; }
+  #check { display: none; } #check.ready { animation: btnpulse 1.6s ease-in-out infinite; }
 
   /* ---------- console ---------- */
   #console { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -173,10 +203,7 @@
     <div id="photo"></div>
     <div id="lines"></div>
   </div></div>
-  <div id="wallfoot">
-    <span class="hint" id="hint"></span>
-    <span class="cnt" id="cnt"></span>
-  </div>
+  <div id="hintnote"><span class="ic" id="hint-ic">💬</span><span class="hint" id="hint"></span><span class="cnt" id="cnt"></span></div>
   <div class="btnrow"><button class="primary" id="check">Check the wall</button></div>
 
   <main id="console"></main>
@@ -219,11 +246,16 @@ function renderPins() {
     let d = box.querySelector(`[data-id="${p.id}"]`);
     if (!d) { d = el(`<div class="pin" data-id="${p.id}" role="button" tabindex="0"></div>`); box.appendChild(d);
       d.onclick = () => pinClick(p.id); d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pinClick(p.id); } }; }
-    d.className = `pin ${p.type} ${p.cls} ${p.gone ? 'gone' : ''} ${G.targets?.has(p.id) ? 'target' : ''} ${G.source === p.id ? 'source' : ''} ${G.mode === 'fold' && G.targets?.has(p.id) ? 'foldable' : ''}`;
+    const isTarget = G.mode === 'string' && G.targets?.has(p.id), isFold = G.mode === 'fold' && G.targets?.has(p.id);
+    d.className = `pin ${p.type} ${p.cls} ${p.gone ? 'gone' : ''} ${isTarget ? 'target' : ''} ${isTarget && G.sel.has(p.id) ? 'strung' : ''} ${G.source === p.id ? 'source' : ''} ${isFold ? 'foldable' : ''}`;
+    d.onmouseenter = isTarget ? () => { G.hover = p.id; renderStrings(); } : null; d.onmouseleave = isTarget ? () => { G.hover = null; renderStrings(); } : null;
     d.style.left = (p.x / 960 * 100) + '%'; d.style.top = (p.y / 600 * 100) + '%'; d.style.setProperty('--rot', p.rot + 'deg');
     if (p.type === 'person') d.innerHTML = `<div class="av" style="background:${p.color}">${p.label[0]}</div><div class="t">${p.label}</div><div class="s">${p.sub}</div>`;
     else if (p.type === 'question') d.innerHTML = `?`;
     else d.innerHTML = `${p.v ? `<span class="v">${p.v}</span>` : ''}<div class="t">${p.label}</div>${p.sub ? `<div class="s">${p.sub}</div>` : ''}`;
+    if (G.source === p.id) d.insertAdjacentHTML('beforeend', '<span class="gtag">from here</span>');
+    else if (isTarget && !G.sel.has(p.id) && G.sel.size === 0 && p.id === [...G.targets][0]) d.insertAdjacentHTML('beforeend', '<span class="gtag y">tap to string</span>');
+    else if (isFold) d.insertAdjacentHTML('beforeend', '<span class="gtag y">tap to fold</span>');
   }
 }
 function curve(a, b) {
@@ -238,9 +270,13 @@ function renderStrings() {
     const d = curve(s.a, s.b); if (!d) continue;
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', `${s.kind} ${s.cut ? 'cut' : ''} ${s.dangling ? 'dangling' : ''} ${s.inactive ? 'inactive' : ''} ${G.mode === 'cut' && G.targets?.has(s.id) ? 'cuttable' : ''} ${G.sel.has(s.id) && G.mode === 'cut' ? 'hot' : ''}`);
-    g.innerHTML = `<path class="shadow" d="${d}"/><path class="yarn" d="${d}"/><path class="fuzz" d="${d}"/><path class="hit" d="${d}"/>`;
+    g.innerHTML = `<path class="guide" d="${d}"/><path class="shadow" d="${d}"/><path class="yarn" d="${d}"/><path class="fuzz" d="${d}"/><path class="hit" d="${d}"/>`;
     if (G.mode === 'cut' && G.targets?.has(s.id)) g.querySelector('.hit').addEventListener('click', () => stringClick(s.id));
     svg.appendChild(g);
+  }
+  if (G.mode === 'string' && G.hover && G.source && !G.sel.has(G.hover)) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'temp');
+    g.innerHTML = `<path class="yarn" d="${curve(G.source, G.hover)}"/>`; svg.appendChild(g);
   }
 }
 function render() { renderPins(); renderStrings(); const n = liveStrings().length; W.peak = Math.max(W.peak, n);
@@ -260,7 +296,11 @@ const NOTE = t => `<div class="line note"><span class="who"></span><span class="
 // ============================== interaction ==============================
 function setMode(mode, opts = {}) {
   G.mode = mode; G.source = opts.source || null; G.targets = opts.targets ? new Set(opts.targets) : null; G.expect = opts.expect || null; G.sel = new Set(); G.tries = 0; G.locked = false;
-  $('#hint').textContent = opts.hint || ''; $('#check').style.display = (mode === 'string' || mode === 'cut') ? 'block' : 'none'; $('#cnt').textContent = '';
+  const icons = { string: '🧵', cut: '✂️', fold: '📌' };
+  $('#hint').textContent = opts.hint || (mode ? '' : 'Continue in the conversation below.'); $('#hint-ic').textContent = icons[mode] || '💬';
+  $('#hintnote').classList.toggle('quiet', !mode);
+  $('#check').style.display = (mode === 'string' || mode === 'cut') ? 'block' : 'none'; $('#cnt').textContent = '';
+  $('#wall').className = mode ? `mode-${mode}` : ''; G.hover = null;
   render();
 }
 function pinClick(id) {
@@ -268,10 +308,10 @@ function pinClick(id) {
   if (G.mode === 'string' && G.targets?.has(id)) {
     const ex = findStrings(G.source, id).filter(s => s.player);
     if (ex.length) { for (const s of ex) W.strings.delete(s.id); G.sel.delete(id); } else { string(G.source, id, 'grant', { player: true }); G.sel.add(id); }
-    $('#cnt').textContent = G.sel.size ? `${G.sel.size} strung` : 'nothing strung'; render();
+    $('#cnt').textContent = G.sel.size ? `${G.sel.size} strung` : 'nothing strung'; $('#check').classList.toggle('ready', true); render();
   } else if (G.mode === 'fold' && G.targets?.has(id)) { G.onFold(id); }
 }
-function stringClick(id) { if (G.locked) return; if (G.sel.has(id)) G.sel.delete(id); else G.sel.add(id); $('#cnt').textContent = `${G.sel.size} to cut`; render(); }
+function stringClick(id) { if (G.locked) return; if (G.sel.has(id)) G.sel.delete(id); else G.sel.add(id); $('#cnt').textContent = `${G.sel.size} to cut`; $('#check').classList.toggle('ready', G.sel.size > 0); render(); }
 function shakeAll(ids) { for (const id of ids) { const d = $(`.pin[data-id="${id}"]`); if (d) { d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); } } }
 function same(a, b) { return a.size === b.size && [...a].every(x => b.has(x)); }
 function award(first) { G.grid.push(first ? '🟩' : '🟨'); } function flunk() { G.grid.push('⬛'); }
@@ -334,7 +374,7 @@ const BEATS = [
       const c = put((ok ? `<p class="ok">Priya and EVERYONE. Two strings. That is the wall as drawn.</p>` : `<p class="no">Under this wall it reaches Priya and EVERYONE.</p>`) +
         MANU(`Uh, okay. <b>I take issue with that.</b>`) + BEN(`Good, let's go. I have a bit of a head start on you here.`)); nextBtn(c); }; },
   function b3() { setMode('string', { source: 'comp', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone'], expect: [],
-      hint: 'Sam\'s comp doc matches the Compensation filter. String it under the wall as drawn, then check.' });
+      hint: 'Sam\'s comp doc matches the Compensation filter. Who sees it under the wall as drawn? Tap anyone who can. If nobody can, tap no one and press Check.' });
     put(MANU(`I don't actually know whether I would want the filters, like exclusion, to apply to personal content. The idea here being, well, <b>if I personally have access to my own salary information, then that can just be in there.</b>`) +
       BEN(`I think the original intent of the filters was: if we have one shared corpus that everyone is pulling from, these are the things we do not want in the shared corpus ever. Which is different than what got implemented, because what got implemented is: if it matches these filters, it does not enter Hyperspell, period.`) +
       NOTE(`So under the wall as drawn, who sees Sam's comp philosophy doc? String it. If the answer is nobody, string nothing and check.`));
