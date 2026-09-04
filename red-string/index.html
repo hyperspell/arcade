@@ -414,7 +414,7 @@ function act(n, date) { $('#hud-act').textContent = `Act ${n} · ${date}`; }
 
 const BEATS = [
   // ---------------- ACT 1 · Sep 1 ----------------
-  function b1() { act(1, 'Sep 1 · Filter and sharing overview'); setupWall(); coldOpen('2:58 PM', 'On a Tuesday', 'Over a video call', '“The Gang Builds a Permissions System”'); scrawl('q', 'WHO CAN SEE THIS?', 700, 545, -3); setMode(null, { hint: 'Read the wall.' });
+  function b1() { act(1, 'Sep 1 · Filter and sharing overview'); setupWall(); coldOpen('2:58 PM', 'On a Tuesday', 'Los Angeles, CA', '“The Gang Builds a Permissions System”'); scrawl('q', 'WHO CAN SEE THIS?', 700, 545, -3); setMode(null, { hint: 'Read the wall.' });
     const c = put(BEN(`Okay, from an architecture perspective we have two concepts. Filters and sharing. Filters remove content from ever coming into Hyperspell. Sharing shares beyond the default audience, on a per-user basis.`) +
       MANU(`Correct. Sort of, right?`) +
       BEN(`For things ingested by personal integrations, and not service accounts or whatever we end up calling them, they are by default private to the user, and we can offer to the user that they should be shared with a different audience. Right now the only audience we support is the company.`) +
@@ -513,7 +513,7 @@ const BEATS = [
         NOTE(`Every string on this wall is a grant somebody would have to explain. Most of them point at a Temporal run whose history will age out. Tomorrow you cut them.`), 'Act 1 · the photograph'); nextBtn(c2, 'Sep 2 →'); }; },
 
   // ---------------- ACT 2 · Sep 2 ----------------
-  function b9() { act(2, 'Sep 2 · Document access and grant computation'); coldOpen('5:38 PM', 'On a Wednesday', 'Over a video call', '“The Gang Discovers the Join Table”'); unscrawl('v'); scrawl('nr', 'NO RETROACTIVE ONES', 640, 560, 3, true);
+  function b9() { act(2, 'Sep 2 · Document access and grant computation'); coldOpen('5:38 PM', 'On a Wednesday', 'Los Angeles, CA', '“The Gang Discovers the Join Table”'); unscrawl('v'); scrawl('nr', 'NO RETROACTIVE ONES', 640, 560, 3, true);
     // reset the model notes; pin the grants table
     for (const id of ['n1', 'n2', 'n3', 'n4', 'ref']) unpin(id);
     pin('grants', 'table', 470, 250, 'grants', 'document · audience · reason'); string('grants', 'everyone', 'version');
@@ -585,7 +585,7 @@ const BEATS = [
       NOTE(`🧵 ${liveStrings().length} strings on the wall, down from ${W.photoStrings}. The tables did that. One more pass.`)); nextBtn(c, 'Sep 3 →'); },
 
   // ---------------- ACT 3 · Sep 3 ----------------
-  function b15() { act(3, 'Sep 3 · three lines'); coldOpen('Late', 'On a Thursday', 'In a Notion doc', '“The Gang Gets Set Theory”'); unscrawl('nr'); unscrawl('q'); scrawl('t3', 'MAKE THEM RULES', 300, 560, -5);
+  function b15() { act(3, 'Sep 3 · three lines'); coldOpen('Late', 'On a Thursday', 'Los Angeles, CA', '“The Gang Gets Set Theory”'); unscrawl('nr'); unscrawl('q'); scrawl('t3', 'MAKE THEM RULES', 300, 560, -5);
     pin('n_owner', 'note', 300, 130, 'PERSONAL STAYS WITH ITS OWNER', 'the special case'); pin('n_bot', 'note', 470, 130, 'SERVICE ACCOUNT → EVERYONE', 'the other special case');
     setMode('fold', { targets: ['n_owner', 'n_bot'], hint: 'Two special cases are still hand-written on the wall. Click each one to fold it into a rule.' });
     put(BEN(`The default grants are a special case the algebra carries by hand: company from an app-scope connection, owner from a user-scope connection, one of them filterable and one not. Every one of those facts is a predicate over provenance. <b>So make them rules.</b>`) +
@@ -611,7 +611,7 @@ const BEATS = [
       `<div class="metric">🧵 <b>${W.photoStrings || 0}</b> at the photograph</div><div class="metric">🧵 <b>${liveStrings().length}</b> now</div><div class="metric">✂️ <b>${W.cuts}</b> cuts</div><div class="metric">📌 <b>${W.down}</b> pins down</div>`); nextBtn(c, 'Sep 4 →'); },
 
   // ---------------- CODA · Sep 4 ----------------
-  function b18() { act(3, 'Sep 4 · one more wrinkle'); coldOpen('The next day', 'On a Friday', 'Over a video call', '“Ben Is Back at iptables”'); $('#lines').classList.remove('show');
+  function b18() { act(3, 'Sep 4 · one more wrinkle'); coldOpen('The next day', 'On a Friday', 'Los Angeles, CA', '“Ben Is Back at iptables”'); $('#lines').classList.remove('show');
     pin('t2', 'person', 760, 190, 'Team 2', 'eng', { color: '#58a' }); W.pins.get('t2').gone = false;
     pin('wr_doc', 'doc', 90, 560, 'Incident retro', 'Notion · Lena · personal');
     pin('wr_share', 'rule', 470, 470, 'Incidents', 'sharing → Team 2', { v: 'v1' }); string('wr_share', 'wr_doc', 'version'); string('wr_share', 't2', 'version');
