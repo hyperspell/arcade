@@ -431,7 +431,7 @@ const BEATS = [
       hint: 'Sam\'s comp doc matches the Compensation filter. Who sees it under the wall as drawn?' });
     put(MANU(`I don't actually know whether I would want the filters, like exclusion, to apply to personal content. The idea here being, well, <b>if I personally have access to my own salary information, then that can just be in there.</b>`) +
       BEN(`I think the original intent of the filters was: if we have one shared corpus that everyone is pulling from, these are the things we do not want in the shared corpus ever. Which is different than what got implemented, because what got implemented is: if it matches these filters, it does not enter Hyperspell, period.`) +
-      NOTE(`So under the wall as drawn, who sees Sam's comp philosophy doc? String it. If the answer is nobody, string nothing and check.`));
+      NOTE(`So under the wall as drawn, who sees Sam's comp philosophy doc? Tap the card that glows.`));
     G.onDone = ok => { settlePlayerStrings();
       const c = put((ok ? `<p class="ok">∅. Nobody, not even Sam. That is what DROPPED means on this wall: an explicit nobody, the null element.</p>` : `<p class="no">Under this wall, nobody. Not even Sam.</p>`) +
         NOTE(`There is a card on the wall for Nobody. Nobody is not a person. Nobody does not work here. Nobody has never connected an integration. Nobody gets the grant anyway. Manu will later name this the null element and put it on a slide about jesters.`) +
