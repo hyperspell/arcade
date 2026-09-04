@@ -85,19 +85,15 @@
     border:2px solid #14130F;border-radius:2px;}
   .smviz .score{position:absolute;left:22px;top:14px;padding:1px 6px;
     font:700 11px ui-monospace,Menlo,Consolas,monospace;color:#F1BE64;background:rgba(12,11,11,.85);}
-  /* Who Can See This cabinet: Guess Who board */
-  .cab.wc .meta,.cab.wc .cta{color:#F0C541;}
-  .wcviz{height:96px;position:relative;overflow:hidden;background:linear-gradient(#C94434,#B8382C 40%,#8F2A21);
-    display:flex;gap:8px;align-items:center;justify-content:center;padding:0 14px;}
-  .wcviz i{display:block;width:34px;height:46px;border-radius:5px;border:2px solid #F0C541;background:#F4EAD6;
-    box-shadow:0 3px 0 rgba(0,0,0,.35);position:relative;}
-  .wcviz i::before{content:'';position:absolute;left:50%;top:7px;translate:-50%;width:16px;height:16px;border-radius:50%;background:#C2543F;}
-  .wcviz i::after{content:'';position:absolute;left:8px;right:8px;bottom:8px;height:3px;background:#23201C;border-radius:2px;}
-  .wcviz i.d{background:linear-gradient(#3A5AA0,#1F3460);}
-  .wcviz i.d::before{background:transparent;}
-  .wcviz i.d::after{content:'?';position:absolute;inset:0;background:none;height:auto;color:#CFE0FF;font:900 22px/46px var(--disp);text-align:center;}
-  .wcviz i.g{border-color:#4FD68A;box-shadow:0 0 0 2px #4FD68A,0 0 16px #4FD68A;}
-  .wcviz .q{position:absolute;right:12px;bottom:6px;font:700 10.5px var(--mono);color:#FFE9B3;letter-spacing:.08em;}
+  /* Red String cabinet: the mailroom wall */
+  .cab.rs .meta,.cab.rs .cta{color:#E0322F;}
+  .rsviz{height:96px;position:relative;overflow:hidden;background:linear-gradient(180deg,#D8D2C4,#C2BBAC);}
+  .rsviz i{position:absolute;width:30px;height:38px;background:#FBFAF6;box-shadow:1px 2px 4px rgba(0,0,0,.4);}
+  .rsviz i::before{content:'';position:absolute;left:50%;top:4px;width:6px;height:6px;border-radius:50%;translate:-50%;background:#D6202A;}
+  .rsviz i::after{content:'';position:absolute;left:5px;right:5px;bottom:5px;height:12px;background:repeating-linear-gradient(0deg,transparent 0 2px,#A09A90 2px 3px);opacity:.6;}
+  .rsviz svg{position:absolute;inset:0;width:100%;height:100%;}
+  .rsviz svg path{fill:none;stroke:#D6202A;stroke-width:2.2;stroke-linecap:round;}
+  .rsviz .scr{position:absolute;right:12px;bottom:4px;font:900 15px 'Marker Felt','Comic Sans MS','Chalkboard SE',cursive;color:#161412;transform:rotate(-4deg);letter-spacing:.03em;}
   /* ---------- footer ---------- */
   footer{margin-top:56px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--dim);line-height:2;}
   footer a{color:var(--text);text-decoration:none;border-bottom:1px solid #3A4356;}
@@ -177,19 +173,21 @@
       </div>
     </a>
 
-    <a class="cab wc" href="who-can-see-this/">
-      <div class="wcviz" aria-hidden="true">
-        <i></i><i class="d"></i><i></i><i class="g"></i><i class="d"></i><i></i><i class="d"></i>
-        <div class="q">WHO CAN SEE THIS?</div>
+    <a class="cab rs" href="red-string/">
+      <div class="rsviz" aria-hidden="true">
+        <svg viewBox="0 0 420 96" preserveAspectRatio="none"><path d="M30 30 Q150 70 260 22"/><path d="M30 30 Q120 90 210 74"/><path d="M110 70 Q200 10 330 60"/><path d="M260 22 Q300 80 330 60"/><path d="M110 70 Q220 95 390 30"/><path d="M30 30 Q210 40 390 30"/></svg>
+        <i style="left:16px;top:12px;transform:rotate(-5deg)"></i><i style="left:96px;top:50px;transform:rotate(4deg)"></i><i style="left:246px;top:4px;transform:rotate(3deg)"></i>
+        <i style="left:196px;top:56px;transform:rotate(-3deg)"></i><i style="left:316px;top:42px;transform:rotate(6deg)"></i><i style="left:376px;top:12px;transform:rotate(-2deg)"></i>
+        <div class="scr">WHO CAN SEE THIS?</div>
       </div>
       <div class="cabbody">
-        <div class="meta">Deduction puzzle, no clock · ~8 min</div>
-        <h2>Who Can See This?</h2>
-        <p class="pitch">Guess Who, inverted. The board is the company. A document arrives with its case
-        file: who fetched it, which rules matched at which version, what people decided. Flip faces
-        up for everyone who can see it and check against the real algebra: <b>sharing is sticky,
-        filters are live, manual wins</b>. Twenty-six cases, including the ones we argued about.</p>
-        <div class="cta">OPEN THE FIRST CASE ▸</div>
+        <div class="meta">Corkboard drama, no clock · ~8 min</div>
+        <h2>Red String</h2>
+        <p class="pitch">Two cofounders, two calls, one wall. Every red string is a grant. You explain who
+        can see what, your cofounder <b>takes issue with that</b>, and the wall fills with documents,
+        rule versions, and Temporal receipts until nobody can read it. Then you pick up the scissors:
+        cut string for tables until the whole model is <b>three lines</b>. The dialogue is real.</p>
+        <div class="cta">PICK UP THE MARKER ▸</div>
       </div>
     </a>
   </div>
