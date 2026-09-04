@@ -252,8 +252,8 @@ function put(html, tag = '') {
   if (tag) card.prepend(el(`<div class="phead">${tag}</div>`));
   $('#console').prepend(card); return card;
 }
-const YOU = t => `<div class="line you"><span class="who">Ben</span><span class="say">${t}</span></div>`;
-const CO = t => `<div class="line co"><span class="who">Manu</span><span class="say">${t}</span></div>`;
+const BEN = t => `<div class="line you"><span class="who">Ben</span><span class="say">${t}</span></div>`;
+const MANU = t => `<div class="line co"><span class="who">Manu</span><span class="say">${t}</span></div>`;
 const LIFE = t => `<div class="line life"><span class="who">meanwhile</span><span class="say">${t}</span></div>`;
 const NOTE = t => `<div class="line note"><span class="who"></span><span class="say">${t}</span></div>`;
 
@@ -321,31 +321,31 @@ function act(n, date) { $('#hud-act').textContent = `Act ${n} · ${date}`; }
 const BEATS = [
   // ---------------- ACT 1 · Sep 1 ----------------
   function b1() { act(1, 'Sep 1 · Filter and sharing overview'); setupWall(); scrawl('q', 'WHO CAN SEE THIS?', 700, 545, -3); setMode(null, { hint: 'Read the wall.' });
-    const c = put(YOU(`Okay, from an architecture perspective we have two concepts. Filters and sharing. Filters remove content from ever coming into Hyperspell. Sharing shares beyond the default audience, on a per-user basis.`) +
-      CO(`Correct. Sort of, right?`) +
-      YOU(`For things ingested by personal integrations, and not service accounts or whatever we end up calling them, they are by default private to the user, and we can offer to the user that they should be shared with a different audience. Right now the only audience we support is the company.`) +
+    const c = put(BEN(`Okay, from an architecture perspective we have two concepts. Filters and sharing. Filters remove content from ever coming into Hyperspell. Sharing shares beyond the default audience, on a per-user basis.`) +
+      MANU(`Correct. Sort of, right?`) +
+      BEN(`For things ingested by personal integrations, and not service accounts or whatever we end up calling them, they are by default private to the user, and we can offer to the user that they should be shared with a different audience. Right now the only audience we support is the company.`) +
       NOTE(`The wall as you drew it: three marker notes in a row, two rules, four documents, the people, and one string that was already there: the service account's roadmap to EVERYONE.`), 'Act 1 · the wall fills up');
     nextBtn(c); },
   function b2() { setMode('string', { source: 'thread', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone'], expect: ['priya', 'everyone'],
       hint: 'String Priya\'s thread to everyone who can see it, under the wall as drawn. Then check.' });
-    put(YOU(`Right now, in theory, we have filters that drop things for everyone and sharing that shares things with everyone. If it matches a filter, it's dropped. If it doesn't match any filters, it is visible to the user. And if after that point it matches one of the sharing rules, it is shared. <b>It is one of those three states, in that order.</b>`) +
+    put(BEN(`Right now, in theory, we have filters that drop things for everyone and sharing that shares things with everyone. If it matches a filter, it's dropped. If it doesn't match any filters, it is visible to the user. And if after that point it matches one of the sharing rules, it is shared. <b>It is one of those three states, in that order.</b>`) +
       NOTE(`Priya's thread matches “Customer feedback”. Click the people it reaches. The wall highlights what you can string to.`));
     G.onDone = ok => { settlePlayerStrings(); render();
       const c = put((ok ? `<p class="ok">Priya and EVERYONE. Two strings. That is the wall as drawn.</p>` : `<p class="no">Under this wall it reaches Priya and EVERYONE.</p>`) +
-        CO(`Uh, okay. <b>I take issue with that.</b>`) + YOU(`Good, let's go. I have a bit of a head start on you here.`)); nextBtn(c); }; },
+        MANU(`Uh, okay. <b>I take issue with that.</b>`) + BEN(`Good, let's go. I have a bit of a head start on you here.`)); nextBtn(c); }; },
   function b3() { setMode('string', { source: 'comp', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone'], expect: [],
       hint: 'Sam\'s comp doc matches the Compensation filter. String it under the wall as drawn, then check.' });
-    put(CO(`I don't actually know whether I would want the filters, like exclusion, to apply to personal content. The idea here being, well, <b>if I personally have access to my own salary information, then that can just be in there.</b>`) +
-      YOU(`I think the original intent of the filters was: if we have one shared corpus that everyone is pulling from, these are the things we do not want in the shared corpus ever. Which is different than what got implemented, because what got implemented is: if it matches these filters, it does not enter Hyperspell, period.`) +
+    put(MANU(`I don't actually know whether I would want the filters, like exclusion, to apply to personal content. The idea here being, well, <b>if I personally have access to my own salary information, then that can just be in there.</b>`) +
+      BEN(`I think the original intent of the filters was: if we have one shared corpus that everyone is pulling from, these are the things we do not want in the shared corpus ever. Which is different than what got implemented, because what got implemented is: if it matches these filters, it does not enter Hyperspell, period.`) +
       NOTE(`So under the wall as drawn, who sees Sam's comp philosophy doc? String it. If the answer is nobody, string nothing and check.`));
     G.onDone = ok => { settlePlayerStrings();
       const c = put((ok ? `<p class="ok">Nobody. Not even Sam. That is what DROPPED means on this wall.</p>` : `<p class="no">Under this wall, nobody. Not even Sam.</p>`) +
-        CO(`Which is fine. I'm okay with that. But the question of whether ingestion filters only apply to shared content or also personal content…`) +
-        YOU(`Because it is an ingestion filter, the content does not get ingested at all. Happy to pivot on that. That's why we're looking at it.`) +
-        CO(`<b>Ingestion filters only apply to shared content.</b> There's some benefits. One is cost.`) +
-        YOU(`Overall it makes a lot of sense that filters that apply to the company only apply to content that is shared with the company. Meaning we could actually reverse the whole thing.`) +
-        YOU(`What I mean by “completely different than what we've been working towards”: sales has been making guarantees. If the data matches this, we're gonna scrub it from Hyperspell entirely. That is very much incompatible with what we're talking about now, because to say “we'll remove it if it's destined to be shared,” we largely need to hold on to it, at least by reference.`) +
-        CO(`We still need to know that we will not ingest it in the future too. We don't need to keep the content. We can keep a reference to the doc.`) +
+        MANU(`Which is fine. I'm okay with that. But the question of whether ingestion filters only apply to shared content or also personal content…`) +
+        BEN(`Because it is an ingestion filter, the content does not get ingested at all. Happy to pivot on that. That's why we're looking at it.`) +
+        MANU(`<b>Ingestion filters only apply to shared content.</b> There's some benefits. One is cost.`) +
+        BEN(`Overall it makes a lot of sense that filters that apply to the company only apply to content that is shared with the company. Meaning we could actually reverse the whole thing.`) +
+        BEN(`What I mean by “completely different than what we've been working towards”: sales has been making guarantees. If the data matches this, we're gonna scrub it from Hyperspell entirely. That is very much incompatible with what we're talking about now, because to say “we'll remove it if it's destined to be shared,” we largely need to hold on to it, at least by reference.`) +
+        MANU(`We still need to know that we will not ingest it in the future too. We don't need to keep the content. We can keep a reference to the doc.`) +
         NOTE(`The first note comes down. Two go up: FILTERS APPLY ONLY TO SHARED CONTENT, and REFERENCE: “we decided about this already, don't bother.” Sam gets his string.`));
       W.pins.get('n1').cls = 'crossed'; W.pins.get('n1').label = 'DROPPED';
       pin('n4', 'note', 300, 300, 'FILTERS APPLY ONLY TO SHARED CONTENT', 'personal stays with its owner');
@@ -354,20 +354,20 @@ const BEATS = [
   function b4() { setMode(null, { hint: 'The wall grows.' });
     pin('chan', 'doc', 90, 560, '#eng-general', 'Slack · 13 chunks'); pin('ch13', 'doc', 230, 560, 'chunk 13', '“…out on medical leave…”', { cls: 'small' });
     string('ch13', 'chan', 'version'); string('chan', 'n1', 'grant'); render();
-    const c = put(YOU(`It gets complicated when you're talking about things that are incremental. One of the interesting things we're running into is realizing yesterday that <b>the filters apply to Slack channels in total.</b>`) +
-      CO(`Which is a different question too.`) +
-      YOU(`It gets an order of magnitude more complicated if we're trying to do it at the chunk level. However, it seems like we might need to, or do some two-pass thing: if a chunk matches, go evaluate the document and see if it should be excluded on the merits.`) +
+    const c = put(BEN(`It gets complicated when you're talking about things that are incremental. One of the interesting things we're running into is realizing yesterday that <b>the filters apply to Slack channels in total.</b>`) +
+      MANU(`Which is a different question too.`) +
+      BEN(`It gets an order of magnitude more complicated if we're trying to do it at the chunk level. However, it seems like we might need to, or do some two-pass thing: if a chunk matches, go evaluate the document and see if it should be excluded on the merits.`) +
       NOTE(`Thirteen chunks of a channel, one mention of medical leave, one string to DROPPED for the whole channel.`)); nextBtn(c); },
   function b5() { setMode(null, { hint: 'Press Preview.' });
     scrawl('v', 'THE VORTEX', 700, 440, 6, true);
-    const c = put(CO(`What does preview do?`) + YOU(`So preview starts a Temporal run. Let me back up for a second. <b>The hardest part of all of this has been managing state, and I want to simplify that.</b>`) +
-      YOU(`When you click Preview it kicks off a Temporal run. We only want one running at a time because the UI can only represent the results of one run at a time. A run of permission application represents the state of the filters at the time you started it.`) +
-      CO(`That means the result of the run is not actually persisted in our database, but only exists on Temporal right now?`) + YOU(`Yes.`));
+    const c = put(MANU(`What does preview do?`) + BEN(`So preview starts a Temporal run. Let me back up for a second. <b>The hardest part of all of this has been managing state, and I want to simplify that.</b>`) +
+      BEN(`When you click Preview it kicks off a Temporal run. We only want one running at a time because the UI can only represent the results of one run at a time. A run of permission application represents the state of the filters at the time you started it.`) +
+      MANU(`That means the result of the run is not actually persisted in our database, but only exists on Temporal right now?`) + BEN(`Yes.`));
     const b = el(`<div class="btnrow"><button class="primary">▶ Preview</button></div>`); c.querySelector('.pbody').appendChild(b);
     b.querySelector('button').onclick = () => { b.querySelector('button').disabled = true;
       pin('run1', 'run', 520, 330, 'RUN 14:02', 'filters as of 14:02 · 73,000 scanned'); for (const d of ['thread', 'comp', 'roadmap', 'chan']) string('run1', d, 'run'); render();
       const c2 = put(NOTE(`One receipt on the wall, four strings to the documents it matched. Then what happened last night, which is totally normal:`) +
-        YOU(`I write a filter, and then I adjust the filter, and then I add another filter, and then I add another filter, and then I delete the filter, and at some point I click the preview button and results are starting to come in…`));
+        BEN(`I write a filter, and then I adjust the filter, and then I add another filter, and then I add another filter, and then I delete the filter, and at some point I click the preview button and results are starting to come in…`));
       const b2 = el(`<div class="btnrow"><button class="primary">Adjust the filter</button></div>`); c2.querySelector('.pbody').appendChild(b2);
       let n = 0; const edits = [['v2', 'RUN 14:10'], ['v3', 'RUN 14:25'], ['v4', 'RUN 14:41']];
       b2.querySelector('button').onclick = function () {
@@ -376,36 +376,36 @@ const BEATS = [
         const rid = `run${n + 2}`; pin(rid, 'run', 520 + (n + 1) * 95, 330 + ((n + 1) % 2) * 50, r, `filters as of ${r.slice(4)}`);
         for (const d of ['thread', 'comp', 'roadmap', 'chan', 'memo'].slice(0, 3 + (n % 3))) string(rid, d, 'run'); string(rp.id, rid, 'version'); render();
         n++; this.textContent = n < 3 ? ['Add another filter', 'Delete a filter', ''][n - 1] : ''; if (n >= 3) { this.disabled = true;
-          const c3 = put(YOU(`<b>But what do those results actually mean now, when I've made a whole bunch of changes while it's running?</b>`) +
-            CO(`Very easy simplification. <b>No retroactive ones.</b>`) + YOU(`Okay, let's sell that. I can sell that. I don't know that we can though, because that was like a core tenet: we need the adjustment filters, and we need to apply them retroactively so we can get rid of stuff we've already ingested.`) +
-            CO(`It's gonna cost you. In general we want to dissuade people from running it retroactively as much as possible. It's gonna cost you because it's gonna cost us.`) +
-            YOU(`It's not cheap. LLM evaluation of each piece of content is not super quick, and we're not particularly intelligent about multiple-rule evaluation. The more rules you add, the more calls, and we have a limited amount of Bedrock bandwidth to begin with.`)); nextBtn(c3); } }; }; },
+          const c3 = put(BEN(`<b>But what do those results actually mean now, when I've made a whole bunch of changes while it's running?</b>`) +
+            MANU(`Very easy simplification. <b>No retroactive ones.</b>`) + BEN(`Okay, let's sell that. I can sell that. I don't know that we can though, because that was like a core tenet: we need the adjustment filters, and we need to apply them retroactively so we can get rid of stuff we've already ingested.`) +
+            MANU(`It's gonna cost you. In general we want to dissuade people from running it retroactively as much as possible. It's gonna cost you because it's gonna cost us.`) +
+            BEN(`It's not cheap. LLM evaluation of each piece of content is not super quick, and we're not particularly intelligent about multiple-rule evaluation. The more rules you add, the more calls, and we have a limited amount of Bedrock bandwidth to begin with.`)); nextBtn(c3); } }; }; },
   function b6() { setMode(null, { hint: 'Per user.' });
     let k = 0; for (const [id, , , , , y] of PEOPLE.slice(0, 4)) { const rid = `urun_${id}`; pin(rid, 'run', 300 + k * 95, 385, `RUN · ${W.pins.get(id).label}`, 'per-user run state'); string(rid, id, 'run', { dangling: true }); string(rid, ['thread', 'comp', 'memo', 'roadmap'][k], 'run', { dangling: true }); k++; } render();
-    const c = put(YOU(`In order to show even two or three examples on the sharing page, you have to start a run of some kind until you find those examples. That's how we ended up in this mess. Because the runs happen in Temporal because they have to, and once you've started the Temporal run, you have to manage Temporal run state, for something you're trying to surface live to the UI. <b>It's a whole vortex. And now we have per-user Temporal run state. Which is how we got here.</b>`) +
-      CO(`Fantastic. Away with all of that.`) + YOU(`I want to rip all this out already. It's days old and I'm like, this is not a good direction to be going in.`) + CO(`Days.`) +
+    const c = put(BEN(`In order to show even two or three examples on the sharing page, you have to start a run of some kind until you find those examples. That's how we ended up in this mess. Because the runs happen in Temporal because they have to, and once you've started the Temporal run, you have to manage Temporal run state, for something you're trying to surface live to the UI. <b>It's a whole vortex. And now we have per-user Temporal run state. Which is how we got here.</b>`) +
+      MANU(`Fantastic. Away with all of that.`) + BEN(`I want to rip all this out already. It's days old and I'm like, this is not a good direction to be going in.`) + MANU(`Days.`) +
       NOTE(`🧵 ${liveStrings().length} strings on the wall. Some of them go to receipts that no longer mean anything.`)); nextBtn(c); },
   function b7() { setMode(null, { hint: 'Teams.' });
     pin('t1', 'person', 760, 100, 'Team 1', 'sales', { color: '#a35' }); pin('t2', 'person', 760, 190, 'Team 2', 'eng', { color: '#58a' }); pin('t3', 'person', 760, 280, 'Team 3', 'finance', { color: '#5a6' });
     pin('r1', 'rule', 300, 545, 'R1 · customers', 'share → Team 1', { v: 'v1' }); pin('r2', 'rule', 440, 545, 'R2 · incidents', 'share → Team 2, 3', { v: 'v1' }); pin('r3', 'rule', 580, 545, 'R3 · announcements', 'share → All', { v: 'v1' });
     pin('r4', 'rule', 300, 470, 'R4 · financial', '“only Team 3”', { v: 'v1', cls: 'filter' }); pin('r5', 'rule', 440, 470, 'R5 · medical', 'drop → nobody', { v: 'v1', cls: 'filter' });
     for (const [a, b] of [['r1', 't1'], ['r2', 't2'], ['r2', 't3'], ['r3', 'everyone'], ['r4', 't3']]) string(a, b, 'version'); render();
-    const c = put(CO(`Let's make it as complex as if we have teams too. Every rule can say: when this matches, share or don't share with any combination of teams. An exclusion filter that says if it's financial information, remove it, <b>except for the finance team.</b> A sharing filter: if it's about customers, share it with sales but not with compliance.`) +
-      YOU(`Don't share with the CEO.`) + CO(`So rule 4 says, instead of “financial information will not be part of the brain,” it says financial information will <b>only</b> be available to Team 3. This is out of scope right now. I'm just saying this is the maximum complexity I really support.`) +
-      YOU(`“Only” is interesting. My instincts are telling me you would want to represent rule 4 in something that starts to look like <b>iptables</b>. Firewall rules. An ordered list: block all, allow from this IP, allow from this port. When you say “only,” you're describing exclude from everyone, include for these, as two separate rule applications.`) +
-      CO(`What I'm saying is that we save complexity by saying those are two kinds of rules, and now we just have to apply an AND. Content-based sharing is: if it matches any of those rules, we apply an OR. Then all of those filters are ANDed on top.`) +
+    const c = put(MANU(`Let's make it as complex as if we have teams too. Every rule can say: when this matches, share or don't share with any combination of teams. An exclusion filter that says if it's financial information, remove it, <b>except for the finance team.</b> A sharing filter: if it's about customers, share it with sales but not with compliance.`) +
+      BEN(`Don't share with the CEO.`) + MANU(`So rule 4 says, instead of “financial information will not be part of the brain,” it says financial information will <b>only</b> be available to Team 3. This is out of scope right now. I'm just saying this is the maximum complexity I really support.`) +
+      BEN(`“Only” is interesting. My instincts are telling me you would want to represent rule 4 in something that starts to look like <b>iptables</b>. Firewall rules. An ordered list: block all, allow from this IP, allow from this port. When you say “only,” you're describing exclude from everyone, include for these, as two separate rule applications.`) +
+      MANU(`What I'm saying is that we save complexity by saying those are two kinds of rules, and now we just have to apply an AND. Content-based sharing is: if it matches any of those rules, we apply an OR. Then all of those filters are ANDed on top.`) +
       NOTE(`A document matches R1 (share → Team 1), R3 (share → All), and R4 (financial → only Team 3). Under OR then AND, who sees it?`));
     const ch = el(`<div class="choices"><button data-o="0">Team 1 and everyone. The shares win, R4 just adds Team 3.</button><button data-o="1">Team 3 only. (Team 1 ∪ All) ∩ Team 3.</button><button data-o="2">Depends on which rule ran last.</button></div>`);
     c.querySelector('.pbody').appendChild(ch); let tries = 0;
     ch.querySelectorAll('button').forEach(b => b.onclick = () => { tries++; if (b.dataset.o === '1') { b.classList.add('rightpick'); ch.querySelectorAll('button').forEach(x => x.disabled = true); award(tries === 1); render();
         const c2 = put(`<p class="ok">Team 3. Union the shares, intersect the filters, and the order never mattered.</p>` +
-          YOU(`<b>Are we gonna need GPUs for this? Because I'm seeing a matrix.</b>`) +
-          CO(`Not trivial, but it also doesn't produce any inconsistencies. It's Boolean logic. <b>The order in the end doesn't matter.</b>`) +
-          YOU(`I think the exclusion rules being “only” is adding an order of magnitude of complexity. That is what my brain is telling me right now. I can't mathematically prove it to you in this moment.`) +
-          CO(`True.`) + YOU(`Narrowing rules and widening rules. And “only Team 3” is overcomplicated as an abstraction if the thing was private to begin with. The only time you'd use block-but-only-Team-3 is when something came in through an org-wide integration and is shared by default. If it's personal content, Team 3 just gets a grant. <b>The origin starts to matter.</b>`) +
-          YOU(`The other states are “no one” and “self.” If we bring content in and it gets caught by a filter, the way it's built right now, the audience is no one.`) + CO(`We can also say self.`)); nextBtn(c2); }
+          BEN(`<b>Are we gonna need GPUs for this? Because I'm seeing a matrix.</b>`) +
+          MANU(`Not trivial, but it also doesn't produce any inconsistencies. It's Boolean logic. <b>The order in the end doesn't matter.</b>`) +
+          BEN(`I think the exclusion rules being “only” is adding an order of magnitude of complexity. That is what my brain is telling me right now. I can't mathematically prove it to you in this moment.`) +
+          MANU(`True.`) + BEN(`Narrowing rules and widening rules. And “only Team 3” is overcomplicated as an abstraction if the thing was private to begin with. The only time you'd use block-but-only-Team-3 is when something came in through an org-wide integration and is shared by default. If it's personal content, Team 3 just gets a grant. <b>The origin starts to matter.</b>`) +
+          BEN(`The other states are “no one” and “self.” If we bring content in and it gets caught by a filter, the way it's built right now, the audience is no one.`) + MANU(`We can also say self.`)); nextBtn(c2); }
       else { b.classList.add('wrongpick'); b.disabled = true; if (tries >= 2) { flunk(); ch.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.dataset.o === '1') x.classList.add('rightpick'); }); render();
-        const c2 = put(`<p class="no">Team 3. (Team 1 ∪ All) ∩ Team 3, in any order.</p>` + YOU(`<b>Are we gonna need GPUs for this? Because I'm seeing a matrix.</b>`) + CO(`It's Boolean logic. <b>The order in the end doesn't matter.</b>`)); nextBtn(c2); } } }); },
+        const c2 = put(`<p class="no">Team 3. (Team 1 ∪ All) ∩ Team 3, in any order.</p>` + BEN(`<b>Are we gonna need GPUs for this? Because I'm seeing a matrix.</b>`) + MANU(`It's Boolean logic. <b>The order in the end doesn't matter.</b>`)); nextBtn(c2); } } }); },
   function b8() { setMode(null, { hint: 'Take the photograph.' });
     const c = put(LIFE(`Manu finds a stylus in his backpack that is not his. “I stole it from somewhere. One of my Uber drivers, actually.” It is a MetaPen, not an Apple Pencil. It has a USB-C port. “It's a stylus with a flashlight.”`) +
       LIFE(`“Let's go grab coffee and continue to have the conversation.”`) +
@@ -426,8 +426,8 @@ const BEATS = [
     string('thread', 'priya', 'grant', { reason: 'default' }); string('memo', 'sam', 'grant', { reason: 'default' }); string('memo', 'priya', 'grant', { reason: 'default' });
     const defaults = [...W.strings.values()].filter(s => s.kind === 'grant' && s.reason === 'default').map(s => s.id);
     setMode(null, { hint: '' });
-    const c = put(YOU(`The workflow is: we chunk it, then we apply the filters, only then do we apply the default grant of the integration it came from. Because that is essentially the fall-through. <b>It is theoretically the lowest priority grant.</b> We ingest the document, compute the set of grants that apply based on the rules, and combine that with the default grant. Those override the default grant, not the other way around.`) +
-      CO(`Use the word overwrite.`) + YOU(`No, override. But I see what you're saying. <b>It's part of the union that we're doing.</b>`) +
+    const c = put(BEN(`The workflow is: we chunk it, then we apply the filters, only then do we apply the default grant of the integration it came from. Because that is essentially the fall-through. <b>It is theoretically the lowest priority grant.</b> We ingest the document, compute the set of grants that apply based on the rules, and combine that with the default grant. Those override the default grant, not the other way around.`) +
+      MANU(`Use the word overwrite.`) + BEN(`No, override. But I see what you're saying. <b>It's part of the union that we're doing.</b>`) +
       NOTE(`Pinned: the grants table, the DEFAULT GRANT note, and MANUAL. Every default-grant string on the wall is something a table could recompute. Cut every string this note can recompute. Leave what it cannot.`), 'Act 2 · cut the string');
     const b = el(`<div class="btnrow"><button class="primary">✂️ Pick up the scissors</button></div>`); c.querySelector('.pbody').appendChild(b);
     b.querySelector('button').onclick = () => { b.querySelector('button').disabled = true;
@@ -435,29 +435,29 @@ const BEATS = [
       setMode('cut', { targets: cuttable, expect: defaults, hint: 'Click the red strings a default-grant row can recompute. Leave the manual one. Then check.' });
       G.onDone = ok => { commitCuts(); render();
         const c2 = put((ok ? `<p class="ok">Every default string is gone. The manual one stays: apply never touches a manual grant.</p>` : `<p class="no">The default strings go. The manual string from June to the roadmap stays; nothing recomputes a human's click.</p>`) +
-          YOU(`The only tricky bit is that right now we don't actually have a way to determine which connection a document came from, and what the default grants should be. We just need to start storing that.`) + CO(`I'd like to, anyway.`)); nextBtn(c2); }; }; },
+          BEN(`The only tricky bit is that right now we don't actually have a way to determine which connection a document came from, and what the default grants should be. We just need to start storing that.`) + MANU(`I'd like to, anyway.`)); nextBtn(c2); }; }; },
   function b10() { setMode(null, { hint: '' });
-    const c = put(YOU(`Basically you say, hey, this document came from this connection. It's important for us to know that anyway. That is one of the ways we can prove that the grants are correct.`) +
-      CO(`All right. So store connection ID.`) + YOU(`<b>Nope, that's not how it works either.</b> Multiple people can retrieve the same document.`) +
+    const c = put(BEN(`Basically you say, hey, this document came from this connection. It's important for us to know that anyway. That is one of the ways we can prove that the grants are correct.`) +
+      MANU(`All right. So store connection ID.`) + BEN(`<b>Nope, that's not how it works either.</b> Multiple people can retrieve the same document.`) +
       NOTE(`The vendor pricing memo came in through Sam's Drive and through Priya's. Where does “which connection” live?`));
     const ch = el(`<div class="choices"><button data-o="0">A connection_id column on the document. Last writer wins.</button><button data-o="1">A join table: one row per document and connection.</button><button data-o="2">Run metadata on the Temporal workflow.</button></div>`);
     c.querySelector('.pbody').appendChild(ch); let tries = 0;
     const land = ok => { pin('prov', 'table', 300, 250, 'document_connections', 'document · connection · user · active'); pin('c_sam', 'conn', 230, 400, 'Sam\'s Drive', 'user scope'); pin('c_priya', 'conn', 230, 330, 'Priya\'s Drive', 'user scope'); pin('c_bot', 'conn', 230, 470, 'Service account', 'app scope');
       string('c_sam', 'memo', 'cable'); string('c_priya', 'memo', 'cable'); string('c_bot', 'roadmap', 'cable'); string('prov', 'c_sam', 'version'); string('prov', 'c_priya', 'version'); string('prov', 'c_bot', 'version'); unpin('n_default'); render();
       const c2 = put((ok ? `<p class="ok">A join table.</p>` : `<p class="no">A join table.</p>`) +
-        YOU(`We could have a join table: a list of connection IDs and a list of documents. Every time somebody ingests a document, we store the connection ID and document pair. Instead of writing grants directly into the grants table, we write a row into the document provenance table, whatever we call it. <b>This is where this document came from. This is all of the paths that it took.</b> Through that we map connection IDs back to the users who did the ingestion, and each person represented here gets a default grant, that we then union with the rest of the grants as computed by the rules at that moment.`) +
+        BEN(`We could have a join table: a list of connection IDs and a list of documents. Every time somebody ingests a document, we store the connection ID and document pair. Instead of writing grants directly into the grants table, we write a row into the document provenance table, whatever we call it. <b>This is where this document came from. This is all of the paths that it took.</b> Through that we map connection IDs back to the users who did the ingestion, and each person represented here gets a default grant, that we then union with the rest of the grants as computed by the rules at that moment.`) +
         NOTE(`Cables go up: each connection to the document it fetched. The DEFAULT GRANT note comes down. It is a row now.`)); nextBtn(c2); };
     ch.querySelectorAll('button').forEach(b => b.onclick = () => { tries++; if (b.dataset.o === '1') { b.classList.add('rightpick'); ch.querySelectorAll('button').forEach(x => x.disabled = true); award(tries === 1); land(true); }
       else { b.classList.add('wrongpick'); b.disabled = true; if (tries >= 2) { flunk(); ch.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.dataset.o === '1') x.classList.add('rightpick'); }); land(false); } } }); },
   function b11() { const cab = findStrings('c_sam', 'memo').map(s => s.id);
     setMode('cut', { targets: cab, expect: cab, hint: 'Sam leaves the company. Cut his cable to the memo, then check.' });
-    put(YOU(`Which is good, because that solves a different problem: how do we easily say, if the original owner has left the company but other people still have grants? <b>It's not the owner grant and the additional grants. It is: this document has come in equally from all of these connections.</b>`) +
+    put(BEN(`Which is good, because that solves a different problem: how do we easily say, if the original owner has left the company but other people still have grants? <b>It's not the owner grant and the additional grants. It is: this document has come in equally from all of these connections.</b>`) +
       NOTE(`Sam leaves. Cut his cable.`));
     G.onDone = ok => { commitCuts(); render();
-      const c = put(`<p class="ok">The memo is still on the wall. Priya's cable holds it.</p>` + YOU(`<b>If there are any connections remaining, we leave the document.</b>`) + CO(`Yeah.`)); nextBtn(c); }; },
+      const c = put(`<p class="ok">The memo is still on the wall. Priya's cable holds it.</p>` + BEN(`<b>If there are any connections remaining, we leave the document.</b>`) + MANU(`Yeah.`)); nextBtn(c); }; },
   function b12() { const cab = findStrings('c_priya', 'memo').map(s => s.id);
     setMode('cut', { targets: cab, expect: cab, hint: 'Now Priya leaves too. Cut the last cable, then check.' });
-    put(YOU(`And we still need to define what behavior occurs if there are no connections left for a document. Because they've all been removed.`) + NOTE(`Cut Priya's cable.`));
+    put(BEN(`And we still need to define what behavior occurs if there are no connections left for a document. Because they've all been removed.`) + NOTE(`Cut Priya's cable.`));
     G.onDone = () => { G.locked = true;
       const c = put(NOTE(`No cable left. What happens to the rows?`));
       const ch = el(`<div class="choices"><button data-o="0">Delete the provenance rows and the document's grants. Clean.</button><button data-o="1">Mark the rows inactive. Keep them.</button></div>`);
@@ -465,25 +465,25 @@ const BEATS = [
       const land = ok => { for (const id of G.sel) { const s = W.strings.get(id); s.inactive = true; } for (const s of W.strings.values()) if (s.a === 'c_sam' && s.b === 'memo') { s.cut = false; s.inactive = true; }
         G.sel = new Set(); pin('q', 'question', 90, 560 - 80, '?'); string('q', 'memo', 'version'); render();
         const c2 = put((ok ? `<p class="ok">Inactive, not deleted.</p>` : `<p class="no">Inactive, not deleted.</p>`) +
-          YOU(`If we want to keep track of that at all, by marking them active or inactive as opposed to deleting the rows when the connections go, we have to figure out the cascade behavior for deletion.`) +
-          CO(`<b>We want that data.</b>`) + NOTE(`The cables go dashed instead of cut. A question mark goes up next to the memo. It is still on the wall today: keep the computed grants standing, or drop to nobody. The design does not answer it yet, and neither does this game.`)); nextBtn(c2); };
+          BEN(`If we want to keep track of that at all, by marking them active or inactive as opposed to deleting the rows when the connections go, we have to figure out the cascade behavior for deletion.`) +
+          MANU(`<b>We want that data.</b>`) + NOTE(`The cables go dashed instead of cut. A question mark goes up next to the memo. It is still on the wall today: keep the computed grants standing, or drop to nobody. The design does not answer it yet, and neither does this game.`)); nextBtn(c2); };
       ch.querySelectorAll('button').forEach(b => b.onclick = () => { tries++; if (b.dataset.o === '1') { b.classList.add('rightpick'); ch.querySelectorAll('button').forEach(x => x.disabled = true); award(tries === 1); land(true); }
         else { b.classList.add('wrongpick'); b.disabled = true; if (tries >= 2) { flunk(); ch.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.dataset.o === '1') x.classList.add('rightpick'); }); land(false); } } }); }; },
   function b13() {
     pin('matches', 'table', 470, 400, 'rule_matches', 'document · chunk · rule version · confidence · decision · effect'); pin('versions', 'table', 640, 400, 'rule_versions', 'append-only · id = the version');
     const runs = [...W.strings.values()].filter(s => s.kind === 'run' && !s.cut).map(s => s.id);
     setMode('cut', { targets: runs, expect: runs, hint: 'Cut every string that goes to a receipt. All of them. Then check.' });
-    put(CO(`Whenever we apply a rule to a document and realize it matches, we need a table that says: here's the document, here's the rule ID, and that rule ID is versioned. So if you made a new version of the rule, we always know which version got applied.`) +
-      YOU(`<b>We're back to the event sourcing.</b>`) + CO(`Basically.`) + YOU(`Is this a property of a document that lives in the documents table, or do we now have a separate table of rule applications?`) +
-      CO(`It needs to be a separate table, because multiple rules can apply to something. A sharing rule applies, and then we realize an exclusion rule also applies, so you don't share. <b>You want to keep track of both.</b>`) +
-      YOU(`So you want to record all matches, whether or not we actually act on them?`) + CO(`Yes. Once we have recorded the match, and the confidence, then we can decide how to apply it: auto-share, or prompt. And when we do a backfill, we don't even have to wait for the entire run to be done. We can just show what's in the database.`) +
+    put(MANU(`Whenever we apply a rule to a document and realize it matches, we need a table that says: here's the document, here's the rule ID, and that rule ID is versioned. So if you made a new version of the rule, we always know which version got applied.`) +
+      BEN(`<b>We're back to the event sourcing.</b>`) + MANU(`Basically.`) + BEN(`Is this a property of a document that lives in the documents table, or do we now have a separate table of rule applications?`) +
+      MANU(`It needs to be a separate table, because multiple rules can apply to something. A sharing rule applies, and then we realize an exclusion rule also applies, so you don't share. <b>You want to keep track of both.</b>`) +
+      BEN(`So you want to record all matches, whether or not we actually act on them?`) + MANU(`Yes. Once we have recorded the match, and the confidence, then we can decide how to apply it: auto-share, or prompt. And when we do a backfill, we don't even have to wait for the entire run to be done. We can just show what's in the database.`) +
       NOTE(`Two tables go up. Every string to a receipt comes down. The receipts were never the record; the rows are.`));
     G.onDone = ok => { commitCuts(); for (const p of W.pins.values()) if (p.type === 'run') unpin(p.id); for (const p of W.pins.values()) if (p.id.startsWith('r_comp_')) unpin(p.id); render();
       const c = put((ok ? `<p class="ok">Every receipt is off the wall. So are the edited versions; they are rows in rule_versions now.</p>` : `<p class="no">Every receipt comes off the wall. The versions become rows in rule_versions.</p>`) +
-        YOU(`We should think about how we keep track of: have we applied this, have we acted on this match? Because that creates the resumability. Otherwise we have to recompute from scratch.`) +
-        CO(`On this very same table, one more column that simply says: automatically applied, or for human review.`) +
-        YOU(`I'm ending up back at event sourcing. You're trying to record a series of stateful operations: the document matched this version of this filter, and separately, we applied the result of that match. And when the label is edited, you would forever have a match that is unapplied because it is superseded by the new version. <b>That is brutal, isn't it?</b>`) +
-        CO(`Just because something can be modeled as a sequence of idempotent atomic operations doesn't mean you should.`)); nextBtn(c); }; },
+        BEN(`We should think about how we keep track of: have we applied this, have we acted on this match? Because that creates the resumability. Otherwise we have to recompute from scratch.`) +
+        MANU(`On this very same table, one more column that simply says: automatically applied, or for human review.`) +
+        BEN(`I'm ending up back at event sourcing. You're trying to record a series of stateful operations: the document matched this version of this filter, and separately, we applied the result of that match. And when the label is edited, you would forever have a match that is unapplied because it is superseded by the new version. <b>That is brutal, isn't it?</b>`) +
+        MANU(`Just because something can be modeled as a sequence of idempotent atomic operations doesn't mean you should.`)); nextBtn(c); }; },
   function b14() { setMode(null, { hint: '' });
     const c = put(LIFE(`Both of you reach for something to draw with. Freeform on the iPad this time.`) +
       NOTE(`🧵 ${liveStrings().length} strings on the wall, down from ${W.photoStrings}. The tables did that. One more pass.`)); nextBtn(c, 'Sep 3 →'); },
@@ -492,7 +492,7 @@ const BEATS = [
   function b15() { act(3, 'Sep 3 · three lines'); unscrawl('nr'); unscrawl('q'); scrawl('t3', 'MAKE THEM RULES', 300, 560, -5);
     pin('n_owner', 'note', 300, 130, 'PERSONAL STAYS WITH ITS OWNER', 'the special case'); pin('n_bot', 'note', 470, 130, 'SERVICE ACCOUNT → EVERYONE', 'the other special case');
     setMode('fold', { targets: ['n_owner', 'n_bot'], hint: 'Two special cases are still hand-written on the wall. Click each one to fold it into a rule.' });
-    put(YOU(`The default grants are a special case the algebra carries by hand: company from an app-scope connection, owner from a user-scope connection, one of them filterable and one not. Every one of those facts is a predicate over provenance. <b>So make them rules.</b>`) +
+    put(BEN(`The default grants are a special case the algebra carries by hand: company from an app-scope connection, owner from a user-scope connection, one of them filterable and one not. Every one of those facts is a predicate over provenance. <b>So make them rules.</b>`) +
       NOTE(`Click a special-case note. It becomes a rule the evaluator can run.`), 'Act 3 · three lines');
     let done = 0;
     G.onFold = id => { const p = W.pins.get(id); if (p.folded) return; p.folded = true;
@@ -501,18 +501,46 @@ const BEATS = [
       G.targets.delete(id); render(); done++;
       if (done === 2) { award(true);
         const c = put(`<p class="ok">Two notes became two rules. Every connection carries a default sharing rule: <span class="mono">connection.id = this connection</span>, audience the company for a service account, the connecting user for a personal one. A filter's audience is the people who connected the content, derived at apply, so it takes service-account content to nobody and leaves personal content with its owner, with no special case anywhere.</p>` +
-          YOU(`No rule or code path knows what an “owner” or “ingester” is. The connection's rule names the person.`)); nextBtn(c); } }; },
+          BEN(`No rule or code path knows what an “owner” or “ingester” is. The connection's rule names the person.`)); nextBtn(c); } }; },
   function b16() { setMode('fold', { targets: ['manual'], hint: 'One note left. Try to fold MANUAL into a rule.' });
     put(NOTE(`One hand-written note is still on the wall. Click it.`));
     G.onFold = id => { shakeAll([id]); G.targets.delete(id); render(); award(true);
-      const c = put(`<p class="mid">The wall refuses.</p>` + YOU(`Manual stays a grant reason, not a rule. <b>A rule needs a matcher, and “someone clicked Share” is not one.</b> Apply rewrites rule grants and never touches a manual row. It is the one thing outside the algebra.`) +
-        CO(`Being able as a human to share documents and then not be surprised afterwards is the design goal.`)); nextBtn(c, 'Read the wall →'); }; },
+      const c = put(`<p class="mid">The wall refuses.</p>` + BEN(`Manual stays a grant reason, not a rule. <b>A rule needs a matcher, and “someone clicked Share” is not one.</b> Apply rewrites rule grants and never touches a manual row. It is the one thing outside the algebra.`) +
+        MANU(`Being able as a human to share documents and then not be surprised afterwards is the design goal.`)); nextBtn(c, 'Read the wall →'); }; },
   function b17() { setMode(null, { hint: '' });
     for (const id of ['n2', 'n3', 'r1', 'r2', 'r3', 'r4', 'r5', 't1', 't2', 't3', 'ch13']) unpin(id);
     const L = $('#lines'); L.innerHTML = `audience(document) =\n    <b>⋃</b> audiences of sharing rules that matched at any of our versions,\n       auto or approved\n  <b>∩</b> <b>⋂</b> audiences of currently active filter rules that matched,\n       where a filter keeps the people who connected the content\n  <b>∪</b> manual grants`;
     L.classList.add('show'); unscrawl('t3'); render();
     const c = put(NOTE(`Three lines, readable from across the room. Sharing is sticky. Filters are live. Filters beat sharing rules. Manual grants beat everything. Every string left on the wall is a row in a table you can point at.`) +
-      `<div class="metric">🧵 <b>${W.photoStrings || 0}</b> at the photograph</div><div class="metric">🧵 <b>${liveStrings().length}</b> now</div><div class="metric">✂️ <b>${W.cuts}</b> cuts</div><div class="metric">📌 <b>${W.down}</b> pins down</div>`); nextBtn(c, 'Debrief →'); },
+      `<div class="metric">🧵 <b>${W.photoStrings || 0}</b> at the photograph</div><div class="metric">🧵 <b>${liveStrings().length}</b> now</div><div class="metric">✂️ <b>${W.cuts}</b> cuts</div><div class="metric">📌 <b>${W.down}</b> pins down</div>`); nextBtn(c, 'Sep 4 →'); },
+
+  // ---------------- CODA · Sep 4 ----------------
+  function b18() { act(3, 'Sep 4 · one more wrinkle'); $('#lines').classList.remove('show');
+    pin('t2', 'person', 760, 190, 'Team 2', 'eng', { color: '#58a' }); W.pins.get('t2').gone = false;
+    pin('wr_doc', 'doc', 90, 560, 'Incident retro', 'Notion · Lena · personal');
+    pin('wr_share', 'rule', 470, 470, 'Incidents', 'sharing → Team 2', { v: 'v1' }); string('wr_share', 'wr_doc', 'version'); string('wr_share', 't2', 'version');
+    pin('wr_filter', 'rule', 640, 470, 'Exclusion', 'filter · audience ∅', { v: 'v1', cls: 'filter' }); string('wr_filter', 'wr_doc', 'version');
+    setMode('string', { source: 'wr_doc', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone', 't2'], expect: ['lena'],
+      hint: 'String Lena\'s retro under the three lines as drawn, then check.' });
+    put(BEN(`Okay, go ahead. One more wrinkle.`) + BEN(`Did you figure out this wrinkle as you were building the Insane Clown Posse slide?`) + MANU(`Yep.`) + BEN(`Oh my God.`) +
+      MANU(`So let's say we have a document that comes through a personal connection, from user 1. And it also has sharing rules that match, that will distribute it to Team 2. So now user 1, and 2, 3, and 4 all have access to it, because it was shared with Team 2.`) +
+      MANU(`The exclusion filters right now, the semantics are <b>nobody except those teams</b>. So right now the exclusion filters have as their audience the null element. Which is an explicit nobody grant, useful to distinguish “this hasn't been granted” from “nobody can see it.” That works perfectly fine for something that comes in through a shared integration.`) +
+      NOTE(`Lena's incident retro. Personal connection. Matches the Incidents sharing rule, audience Team 2. Also matches a filter whose audience is ∅. Who can see it, under the three lines as drawn?`), 'Coda · Sep 4');
+    G.onDone = ok => { settlePlayerStrings(); scrawl('hw', 'HENCE THE WALL', 480, 300, -3, true); pin('q2', 'question', 780, 560, '?'); string('q2', 'wr_doc', 'version'); render();
+      const c = put((ok ? `<p class="ok">Lena, and only Lena. The filter keeps the people who connected the content, so Team 2 loses it.</p>` : `<p class="no">Under the three lines as drawn: Lena, and only Lena. Team 2 loses it.</p>`) +
+        MANU(`However, right now that also means that the user that originally ingested it doesn't have access to it anymore.`) +
+        BEN(`But that was why we wanted to do the union of those two sets, right? The default grant writes a rule that says this user has access, and you set-union: this user, and nobody except this team. When we evaluate it to a positive set instead of a negative set, it becomes this user and this team.`) +
+        MANU(`But if you have this user from the default rule and this team from the sharing rule, and an exclusion filter says don't share this, then user 1 and Team 2 also lose their grants. We don't currently have a… <b>this is where the precedence and the ordering starts to matter.</b>`) +
+        BEN(`<b>And I don't want it to.</b>`) + MANU(`I know. Which is why we landed on set union instead.`) +
+        BEN(`It changes the semantics a little bit. It actually just means we have the original default semantics: if something is in a filter, nobody can see it. Not even the person with the personal connection. Which we decided was not what we wanted.`) +
+        MANU(`Which we just decided to work around by not applying the exclusion filters to personal connections. But that is not actually a good idea, because we still need to apply them if sharing rules applied.`) +
+        BEN(`Right, we need to apply them, but the way we apply them is essentially this union.`) + MANU(`No. The exclusion filter is an intersection.`) + BEN(`I see.`) +
+        NOTE(`Three readings of one filter, three answers for the same document. Filter audience ∅: nobody, not even Lena. Filter keeps the connectors: Lena, not Team 2. “Nobody except those teams”: Team 2, not Lena. The three lines are not done.`) +
+        BEN(`I think we just need to change the algebra a little bit.`) + MANU(`<b>Can't just go around changing algebra, man.</b>`) + BEN(`I think we can get there mathematically.`) + MANU(`That's the whole point of a formal system, right?`) +
+        BEN(`Fuck. This feels like the part where we just explain a list of all the edge cases to Claude and tell it to write the algebra.`) +
+        MANU(`Yeah, I did. I wrote everything down and asked what the prior art is. It said lattice. And then I had to explain: <b>this is not a lattice, it's a poset.</b>`) +
+        BEN(`At the next offsite we're going to be making possets. Hyperspell possets.`) +
+        MANU(`Okay. Maybe this needs more thinking.`) + BEN(`<b>Yes. Hence the wall.</b>`)); nextBtn(c, 'Debrief →'); }; },
 ];
 
 // ============================== debrief ==============================
@@ -530,9 +558,9 @@ function debrief() {
     <li>A document that matches a sharing rule and a filter rule is blocked by the filter and never reaches the Inbox. Counts keep both.</li>
     <li>Opt-in gates evaluation: nobody's private content is judged against a sharing rule they did not enable. Forward-only; existing content needs a backfill you pay for.</li>
     <li>A long Slack channel converges to filtered. Chunk-level grants are named as orthogonal work.</li>
-    <li>Still open: what a document with no active connections keeps. The question mark stays on the wall.</li>
+    <li>Still open: what a document with no active connections keeps. And the Sep 4 wrinkle: a personal document shared to a team that also hits a filter. Three readings of the filter's audience give three answers. Both question marks stay on the wall.</li>
   </ul>`, 'What the wall settled and what it did not');
-  put(`<div class="metric">${title}</div><p>The wall you cut is the design as of Sep 3: provenance rows, rule versions, matches, opt-ins, a fresh grants table, and an audience that is three lines of set algebra. The surfaces shipped this week; the computed-grants cutover and the scorer's confidence bands are coming. Nothing here claims they are live.</p>`, 'Debrief · where this actually stands');
+  put(`<div class="metric">${title}</div><p>The wall you cut is the design as of Sep 3, plus the wrinkle from Sep 4: provenance rows, rule versions, matches, opt-ins, a fresh grants table, and an audience that is three lines of set algebra. The surfaces shipped this week; the computed-grants cutover and the scorer's confidence bands are coming. Nothing here claims they are live.</p>`, 'Debrief · where this actually stands');
   c.querySelector('[data-c]').onclick = function () { navigator.clipboard.writeText(card).then(() => { this.textContent = 'Copied ✓'; }).catch(() => { this.textContent = 'Select & copy above'; }); };
   c.querySelector('[data-a]').onclick = () => location.reload();
 }
