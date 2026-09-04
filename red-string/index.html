@@ -122,7 +122,8 @@
   #strings .cuttable .hit { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='26' font-size='26'>✂️</text></svg>") 8 8, crosshair; }
   @keyframes ants { to { stroke-dashoffset: -22; } }
   #strings .temp .yarn { stroke: var(--yellow); stroke-dasharray: 7 5; opacity: .9; } #strings .temp .shadow, #strings .temp .fuzz { display: none; }
-  #console .card:first-child button.primary:not(:disabled), #console .card:first-child .choices button:not(:disabled) { animation: btnpulse 1.6s ease-in-out infinite; }
+  #console .card:first-child button.primary:not(:disabled) { animation: btnpulse 1.6s ease-in-out infinite; }
+  .choices button[data-o="1"]:not(:disabled) { border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(242,200,75,.5), 0 0 16px rgba(242,200,75,.5); animation: btnpulse 1.6s ease-in-out infinite; }
   @keyframes btnpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242,200,75,0); } 50% { box-shadow: 0 0 0 5px rgba(242,200,75,.45); } }
   #hintnote { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; padding: 10px 14px; background: #fff2ad; color: #2a2008; border-radius: 2px;
     box-shadow: 2px 3px 8px rgba(0,0,0,.45); font-family: var(--marker); font-size: 15px; line-height: 1.3; transform: rotate(-.6deg); position: relative; }
@@ -185,7 +186,7 @@
   <p>Ben and Manu, two calls, one corkboard. You are Ben at the wall, explaining who can see what.
   Every red string is a grant. Manu keeps asking the one question and taking issue with the
   answer, and the wall fills up until nobody can read it. Then you cut string for tables until three
-  lines are left. The dialogue is theirs, trimmed. No clock. About eight minutes.</p>
+  lines are left. The dialogue is theirs, trimmed. Nothing to lose: the wall shows you what to touch. No clock. About eight minutes.</p>
   <p class="mono" id="best" style="color:var(--dim)"></p>
   <div class="btnrow"><button class="primary" id="start">▶ Pick up the marker</button></div>
   <p class="warn"><b>Honesty clause.</b> The arguments, dates, and design are real. The documents and people on the wall are fiction.</p>
@@ -194,7 +195,7 @@
 <div id="app">
   <header id="hud">
     <span class="act" id="hud-act">Hyperspell Arcade</span>
-    <span class="r"><span class="str">🧵 <b id="c-str">0</b></span><span>📌 <b id="c-pin">0</b></span><span id="c-grid" class="mono" style="letter-spacing:1px"></span></span>
+    <span class="r"><span class="str">🧵 <b id="c-str">0</b></span><span>📌 <b id="c-pin">0</b></span></span>
   </header>
 
   <div id="wallwrap"><div id="wall">
@@ -281,7 +282,7 @@ function renderStrings() {
   }
 }
 function render() { renderPins(); renderStrings(); const n = liveStrings().length; W.peak = Math.max(W.peak, n);
-  $('#c-str').textContent = n; $('#c-pin').textContent = [...W.pins.values()].filter(p => !p.gone).length; $('#c-grid').textContent = G.grid.join(''); }
+  $('#c-str').textContent = n; $('#c-pin').textContent = [...W.pins.values()].filter(p => !p.gone).length; }
 
 // ============================== console ==============================
 function put(html, tag = '') {
@@ -296,7 +297,10 @@ const NOTE = t => `<div class="line note"><span class="who"></span><span class="
 
 // ============================== interaction ==============================
 function setMode(mode, opts = {}) {
-  G.mode = mode; G.source = opts.source || null; G.targets = opts.targets ? new Set(opts.targets) : null; G.expect = opts.expect || null; G.sel = new Set(); G.tries = 0; G.locked = false;
+  G.mode = mode; G.source = opts.source || null; G.expect = opts.expect || null; G.sel = new Set(); G.tries = 0; G.locked = false;
+  G.targets = (mode === 'string' || mode === 'cut') ? new Set(opts.expect || []) : (opts.targets ? new Set(opts.targets) : null);
+  if (mode === 'string') opts.hint = (opts.hint || '') + (G.targets.size ? ' Tap the glowing cards, then check.' : ' Nothing glows: nobody can see it. Press Check.');
+  if (mode === 'cut') opts.hint = (opts.hint || '') + ' Click the glowing strings, then check.';
   const icons = { string: '🧵', cut: '✂️', fold: '📌' };
   $('#hint').textContent = opts.hint || (mode ? '' : 'Continue in the conversation below.'); $('#hint-ic').textContent = icons[mode] || '💬';
   $('#hintnote').classList.toggle('quiet', !mode);
@@ -315,18 +319,14 @@ function pinClick(id) {
 function stringClick(id) { if (G.locked) return; if (G.sel.has(id)) G.sel.delete(id); else G.sel.add(id); $('#cnt').textContent = `${G.sel.size} to cut`; $('#check').classList.toggle('ready', G.sel.size > 0); render(); }
 function shakeAll(ids) { for (const id of ids) { const d = $(`.pin[data-id="${id}"]`); if (d) { d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); } } }
 function same(a, b) { return a.size === b.size && [...a].every(x => b.has(x)); }
-function award(first) { G.grid.push(first ? '🟩' : '🟨'); } function flunk() { G.grid.push('⬛'); }
+function award() {} function flunk() {}
 
 $('#check').onclick = () => {
-  if (G.locked) return; G.tries++;
+  if (G.locked) return;
   const want = new Set(G.expect);
-  if (same(G.sel, want)) { G.locked = true; award(G.tries === 1); G.onDone(true); return; }
-  if (G.tries === 1) { $('#hint').textContent = G.mode === 'cut' ? 'Not that set of strings. One more try.' : 'Not that audience. One more try.';
-    shakeAll(G.mode === 'string' ? [...want].filter(x => !G.sel.has(x)).concat([...G.sel].filter(x => !want.has(x))) : []); return; }
-  G.locked = true; flunk();
-  if (G.mode === 'string') { for (const s of [...W.strings.values()]) if (s.player) W.strings.delete(s.id); for (const t of want) string(G.source, t, 'grant', { player: true }); }
-  else { G.sel = new Set(want); }
-  G.onDone(false);
+  if (same(G.sel, want)) { G.locked = true; G.onDone(true); return; }
+  $('#hint').textContent = G.mode === 'cut' ? 'A glowing string is still uncut.' : 'A glowing card is still down. Tap everything that glows, then check.';
+  shakeAll(G.mode === 'string' ? [...want].filter(x => !G.sel.has(x)) : []);
 };
 function commitCuts() { for (const id of G.sel) { const s = W.strings.get(id); if (s) { s.cut = true; W.cuts++; } } G.sel = new Set(); }
 function settlePlayerStrings() { for (const s of W.strings.values()) delete s.player; }
@@ -445,7 +445,7 @@ const BEATS = [
           BEN(`I think the exclusion rules being “only” is adding an order of magnitude of complexity. That is what my brain is telling me right now. I can't mathematically prove it to you in this moment.`) +
           MANU(`True.`) + BEN(`Narrowing rules and widening rules. And “only Team 3” is overcomplicated as an abstraction if the thing was private to begin with. The only time you'd use block-but-only-Team-3 is when something came in through an org-wide integration and is shared by default. If it's personal content, Team 3 just gets a grant. <b>The origin starts to matter.</b>`) +
           BEN(`The other states are “no one” and “self.” If we bring content in and it gets caught by a filter, the way it's built right now, the audience is no one.`) + MANU(`We can also say self.`)); nextBtn(c2); }
-      else { b.classList.add('wrongpick'); b.disabled = true; if (tries >= 2) { flunk(); ch.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.dataset.o === '1') x.classList.add('rightpick'); }); render();
+      else { b.classList.add('wrongpick'); b.disabled = true; if (false) { render();
         const c2 = put(`<p class="no">Team 3. (Team 1 ∪ All) ∩ Team 3, in any order.</p>` + BEN(`<b>Are we gonna need GPUs for this? Because I'm seeing a matrix.</b>`) + MANU(`It's Boolean logic. <b>The order in the end doesn't matter.</b>`)); nextBtn(c2); } } }); },
   function b8() { setMode(null, { hint: 'Take the photograph.' });
     const c = put(LIFE(`Manu finds a stylus in his backpack that is not his. “I stole it from somewhere. One of my Uber drivers, actually.” It is a MetaPen, not an Apple Pencil. It has a USB-C port. “It's a stylus with a flashlight.”`) +
@@ -489,7 +489,7 @@ const BEATS = [
         BEN(`We could have a join table: a list of connection IDs and a list of documents. Every time somebody ingests a document, we store the connection ID and document pair. Instead of writing grants directly into the grants table, we write a row into the document provenance table, whatever we call it. <b>This is where this document came from. This is all of the paths that it took.</b> Through that we map connection IDs back to the users who did the ingestion, and each person represented here gets a default grant, that we then union with the rest of the grants as computed by the rules at that moment.`) +
         NOTE(`Cables go up: each connection to the document it fetched. The DEFAULT GRANT note comes down. It is a row now.`)); nextBtn(c2); };
     ch.querySelectorAll('button').forEach(b => b.onclick = () => { tries++; if (b.dataset.o === '1') { b.classList.add('rightpick'); ch.querySelectorAll('button').forEach(x => x.disabled = true); award(tries === 1); land(true); }
-      else { b.classList.add('wrongpick'); b.disabled = true; if (tries >= 2) { flunk(); ch.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.dataset.o === '1') x.classList.add('rightpick'); }); land(false); } } }); },
+      else { b.classList.add('wrongpick'); b.disabled = true; } }); },
   function b11() { const cab = findStrings('c_sam', 'memo').map(s => s.id);
     setMode('cut', { targets: cab, expect: cab, hint: 'Sam leaves the company. Cut his cable to the memo, then check.' });
     put(BEN(`Which is good, because that solves a different problem: how do we easily say, if the original owner has left the company but other people still have grants? <b>It's not the owner grant and the additional grants. It is: this document has come in equally from all of these connections.</b>`) +
@@ -509,7 +509,7 @@ const BEATS = [
           BEN(`If we want to keep track of that at all, by marking them active or inactive as opposed to deleting the rows when the connections go, we have to figure out the cascade behavior for deletion.`) +
           MANU(`<b>We want that data.</b>`) + NOTE(`The cables go dashed instead of cut. A question mark goes up next to the memo. It is still on the wall today: keep the computed grants standing, or drop to nobody. The design does not answer it yet, and neither does this game.`)); nextBtn(c2); };
       ch.querySelectorAll('button').forEach(b => b.onclick = () => { tries++; if (b.dataset.o === '1') { b.classList.add('rightpick'); ch.querySelectorAll('button').forEach(x => x.disabled = true); award(tries === 1); land(true); }
-        else { b.classList.add('wrongpick'); b.disabled = true; if (tries >= 2) { flunk(); ch.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.dataset.o === '1') x.classList.add('rightpick'); }); land(false); } } }); }; },
+        else { b.classList.add('wrongpick'); b.disabled = true; } }); }; },
   function b13() {
     pin('matches', 'table', 470, 400, 'rule_matches', 'document · chunk · rule version · confidence · decision · effect'); pin('versions', 'table', 640, 400, 'rule_versions', 'append-only · id = the version');
     const runs = [...W.strings.values()].filter(s => s.kind === 'run' && !s.cut).map(s => s.id);
@@ -617,9 +617,7 @@ const BEATS = [
 // ============================== debrief ==============================
 function debrief() {
   $('#hud-act').textContent = 'Debrief'; setMode(null, { hint: '' });
-  const firsts = G.grid.filter(g => g === '🟩').length, total = G.grid.length;
-  const title = firsts === total ? 'Cofounder' : firsts >= total - 1 ? 'Set Theorist' : firsts >= total - 3 ? 'Wall Reader' : 'Pepe Silvia';
-  const card = `RED STRING 🧵\n${title} · ${G.grid.join('')}\n🧵 ${W.photoStrings || 0} → ${liveStrings().length} · ✂️ ${W.cuts} cuts · 📌 ${W.down} pins down\nhyperspell.github.io/arcade`;
+  const card = `RED STRING 🧵\nTwo calls, one wall.\n🧵 ${W.photoStrings || 0} → ${liveStrings().length} strings · ✂️ ${W.cuts} cuts · 📌 ${W.down} pins down\nhyperspell.github.io/arcade`;
   const best = +(localStorage.getItem('red-string-best') || 0); if (W.cuts > best) localStorage.setItem('red-string-best', W.cuts);
   const c = put(`<pre class="sharecard">${card}</pre><div class="btnrow"><button class="primary" data-c>Copy the card</button><button data-a>Play again</button></div><p class="warn">Built by the <a href="https://hyperspell.com">Hyperspell</a> team.</p>`, 'Share your wall');
   put(`<ul class="log" style="margin-top:0">
@@ -631,7 +629,7 @@ function debrief() {
     <li>A long Slack channel converges to filtered. Chunk-level grants are named as orthogonal work.</li>
     <li>Still open: what a document with no active connections keeps. And the Sep 4 wrinkle: a personal document shared to a team that also hits a filter. Three readings of the filter's audience give three answers. Both question marks stay on the wall. The ordered list of rules versus two set-algebra steps is still being argued; the game lets you step through both.</li>
   </ul>`, 'What the wall settled and what it did not');
-  put(`<div class="metric">${title}</div><p>The wall you cut is the design as of Sep 3, plus the wrinkle from Sep 4: provenance rows, rule versions, matches, opt-ins, a fresh grants table, and an audience that is three lines of set algebra. The surfaces shipped this week; the computed-grants cutover and the scorer's confidence bands are coming. Nothing here claims they are live.</p>`, 'Debrief · where this actually stands');
+  put(`<p>The wall you cut is the design as of Sep 3, plus the wrinkle from Sep 4: provenance rows, rule versions, matches, opt-ins, a fresh grants table, and an audience that is three lines of set algebra. The surfaces shipped this week; the computed-grants cutover and the scorer's confidence bands are coming. Nothing here claims they are live.</p>`, 'Debrief · where this actually stands');
   c.querySelector('[data-c]').onclick = function () { navigator.clipboard.writeText(card).then(() => { this.textContent = 'Copied ✓'; }).catch(() => { this.textContent = 'Select & copy above'; }); };
   c.querySelector('[data-a]').onclick = () => location.reload();
 }
