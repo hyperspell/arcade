@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Who Can See This?</title>
+<meta name="description" content="A Guess Who–flavored puzzle about content rules: who can see a document once sharing rules, filter rules, manual shares, and provenance all have their say. Hyperspell Arcade Nº4.">
+<style>
+  :root {
+    --bg: #0f1116; --panel: #1a1d26; --panel2: #141720; --line: #2a2f3d;
+    --text: #e6e4dc; --dim: #8d94a6; --head: #f6efe0;
+    --red: #b8382c; --red2: #8f2a21; --yellow: #f0c541; --cream: #f4ead6; --ink: #23201c;
+    --blue: #2e4a86; --blue2: #1f3460; --green: #4fd68a; --amber: #f1be64; --rose: #ff6b6b;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  #app { max-width: 900px; margin: 0 auto; padding: 0 12px 60px; }
+  .mono { font-family: var(--mono); }
+  a { color: var(--head); }
+
+  /* ---------- panel chrome (moulded plastic) ---------- */
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+  .phead { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--panel2);
+    border-bottom: 1px solid var(--line); border-radius: 10px 10px 0 0; color: var(--head);
+    font-weight: 700; font-size: 12.5px; text-transform: uppercase; letter-spacing: .08em; }
+  .phead .tag { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--dim);
+    letter-spacing: .08em; }
+  .pbody { padding: 12px 14px; }
+  .pbody p { margin: 8px 0; max-width: 66ch; }
+
+  #hud { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 16px;
+    padding: 8px 14px; margin: 0 -12px 12px; background: var(--panel2);
+    border-bottom: 1px solid var(--line); box-shadow: 0 2px 10px rgba(0,0,0,.5);
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    font-variant-numeric: tabular-nums; }
+  #hud .r { margin-left: auto; display: flex; gap: 14px; }
+  #hud .case { color: var(--yellow); }
+
+  /* ---------- the table: case file + board ---------- */
+  #table { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 12px; align-items: start; }
+  @media (max-width: 720px) { #table { grid-template-columns: 1fr; } }
+
+  .doc { display: flex; gap: 10px; align-items: flex-start; }
+  .doc .ico { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 8px; display: grid; place-items: center;
+    font-size: 19px; background: var(--panel2); border: 1px solid var(--line); }
+  .doc .nm { font-weight: 700; color: var(--head); line-height: 1.25; }
+  .doc .src { color: var(--dim); font-size: 12px; }
+  .excerpt { margin: 8px 0 0; padding: 8px 10px; background: var(--cream); color: var(--ink); border-radius: 6px;
+    font-family: var(--mono); font-size: 12px; line-height: 1.55; box-shadow: 2px 2px 0 rgba(0,0,0,.4); }
+  .excerpt .hl { background: #ffd16a; padding: 0 2px; }
+  .cf h4 { margin: 12px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 5px 8px; margin: 3px 0; border-radius: 6px;
+    background: var(--panel2); border: 1px solid var(--line); font-size: 13px; }
+  .row .k { color: var(--dim); font-family: var(--mono); font-size: 11px; }
+  .row .who { font-weight: 700; color: var(--head); }
+  .row.off { opacity: .45; text-decoration: line-through; }
+  .cable { width: 14px; height: 14px; border-radius: 50%; flex: 0 0 14px; border: 3px solid #666; background: #222; }
+  .cable.bot { border-color: var(--amber); } .cable.per { border-color: #7fb0ff; } .row.off .cable { border-color: #444; }
+  .pull { margin-left: auto; font-size: 11px; padding: 2px 8px; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase; }
+  .badge.share { background: #1d4a3a; color: #7ee2b3; } .badge.filter { background: #4a1d1d; color: #ff9c9c; }
+  .badge.attr { background: #2b2b4a; color: #b6b6ff; }
+  .badge.dec { background: #3a3a1d; color: #f3e08a; }
+  .badge.old { background: #2a2a2a; color: #999; }
+  .conf { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-left: auto; }
+  .flag { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .lamp { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .lamp.off { background: #444; box-shadow: none; }
+  .empty { color: var(--dim); font-size: 12.5px; font-style: italic; padding: 3px 8px; }
+
+  /* ---------- Guess Who board ---------- */
+  #boardwrap { background: linear-gradient(#c94434, var(--red) 40%, var(--red2)); border-radius: 12px;
+    padding: 12px; border: 2px solid #5a1a13; box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 8px 22px rgba(0,0,0,.5); }
+  #boardtitle { color: var(--yellow); font-weight: 800; text-transform: uppercase; letter-spacing: .12em;
+    font-size: 12px; text-shadow: 0 1px 0 #000; display: flex; align-items: center; gap: 8px; }
+  #boardtitle .q { margin-left: auto; color: #ffe9b3; font-weight: 600; text-transform: none; letter-spacing: 0;
+    font-size: 12.5px; }
+  #board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+  @media (max-width: 420px) { #board { grid-template-columns: repeat(2, 1fr); } }
+  .face { perspective: 600px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .face .in { position: relative; width: 100%; aspect-ratio: 3 / 4; transform-style: preserve-3d;
+    transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+  .face.down .in { transform: rotateX(180deg); }
+  .face .side { position: absolute; inset: 0; border-radius: 8px; backface-visibility: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    border: 2px solid var(--yellow); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+  .face .front { background: var(--cream); color: var(--ink); }
+  .face .back { background: linear-gradient(#3a5aa0, var(--blue2)); color: #cfe0ff; transform: rotateX(180deg); }
+  .face .back .qm { font-size: 34px; font-weight: 900; opacity: .7; }
+  .face .back .nm { font-size: 11px; opacity: .8; }
+  .av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 800;
+    font-size: 16px; color: #fff; border: 2px solid rgba(0,0,0,.25); }
+  .face .nm { font-weight: 700; font-size: 12.5px; }
+  .face .rl { font-size: 10.5px; color: #6b6257; }
+  .face.glow .front { box-shadow: 0 0 0 2px var(--green), 0 0 18px var(--green); border-color: var(--green); }
+  .face.wrong .in { animation: shake .5s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  .face.wrong.down .in { animation: shakedown .5s; }
+  @keyframes shakedown { 0%,100%{transform:rotateX(180deg) translateX(0)} 20%{transform:rotateX(180deg) translateX(-6px)}
+    40%{transform:rotateX(180deg) translateX(6px)} 60%{transform:rotateX(180deg) translateX(-4px)} 80%{transform:rotateX(180deg) translateX(4px)} }
+  .face.locked { cursor: default; }
+  #boardfoot { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  #boardfoot .hint { color: #ffe9b3; font-size: 12.5px; }
+  #boardfoot .cnt { margin-left: auto; font-family: var(--mono); font-size: 12px; color: #ffe9b3; }
+  .quick { display: flex; gap: 6px; }
+  .quick button { font-size: 11px; padding: 4px 9px; }
+
+  /* ---------- rewind lever ---------- */
+  #rewind { margin-top: 10px; padding: 10px 12px; background: #2a1410; border-radius: 8px; border: 1px solid #5a1a13; }
+  #rewind .lbl { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: #ffd6a3; }
+  #rewind input { width: 100%; accent-color: var(--yellow); }
+  #rewind .now { color: var(--yellow); font-weight: 700; font-size: 12.5px; margin-top: 4px; }
+  #rewind .past { color: #ffb3a3; font-size: 12px; }
+
+  /* ---------- choice ---------- */
+  .choices { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+  .choices button.picked-wrong { border-color: var(--rose); color: var(--rose); }
+  .choices button.picked-right { border-color: var(--green); color: var(--green); }
+
+  /* ---------- console ---------- */
+  #console { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+  #console .card { animation: fresh 1.2s ease-out; }
+  @keyframes fresh { from { outline: 2px solid var(--yellow); } to { outline: 2px solid transparent; } }
+  .readout { background: #0d0f14; border: 1px solid var(--line); padding: 9px 11px; margin: 8px 0; border-radius: 6px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.7; overflow-x: auto; }
+  .readout .k { color: var(--dim); }
+  .ok { color: var(--green); } .no { color: var(--rose); } .mid { color: var(--amber); }
+  blockquote { margin: 10px 0; padding: 2px 0 2px 12px; border-left: 3px solid var(--yellow);
+    font-style: italic; max-width: 60ch; }
+  .cite { color: var(--dim); font-style: normal; font-size: 12px; }
+  .algebra { font-family: var(--mono); font-size: 12.5px; background: #0d0f14; border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 10px; white-space: pre; overflow-x: auto; line-height: 1.6; }
+  .algebra b { color: var(--yellow); font-weight: 700; }
+
+  .btnrow { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+  button { font: inherit; font-size: 14px; text-align: left; cursor: pointer; color: var(--text);
+    background: linear-gradient(#262a36, #1d212b); border: 1px solid #3a4052; border-radius: 7px;
+    padding: 8px 12px; touch-action: manipulation; }
+  button:hover:not(:disabled) { background: linear-gradient(#303546, #262a36); color: var(--head); }
+  button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: linear-gradient(#f4d060, #e0b12f); color: #2a2008; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .05em; font-size: 13px; border-color: #b58a1c; text-align: center; }
+  button.primary:hover:not(:disabled) { background: linear-gradient(#ffdc78, #eabb3a); color: #2a2008; }
+  button.share { background: linear-gradient(#5fcf8f, #3fa86c); color: #072b17; font-weight: 800; border-color: #2c7a4d; text-align: center; }
+  button.dismiss { border-color: #7a3a3a; color: #ffb3b3; text-align: center; }
+  .inboxrow { display: flex; gap: 8px; margin-top: 10px; } .inboxrow button { flex: 1; }
+
+  .log { margin: 8px 0; padding-left: 18px; } .log li { margin: 6px 0; max-width: 66ch; }
+  .score { font-size: 24px; font-weight: 800; color: var(--head); margin: 4px 0; text-transform: uppercase; }
+  pre.sharecard { background: #0d0f14; border: 1px solid var(--line); padding: 11px 13px; border-radius: 6px;
+    font-size: 13.5px; line-height: 1.6; overflow-x: auto; }
+  .warn { color: var(--dim); font-size: 12.5px; } .warn b { color: var(--yellow); }
+
+  #titlescreen { position: fixed; inset: 0; z-index: 50; overflow: auto;
+    background: radial-gradient(ellipse at 50% 20%, #3a1a14 0%, var(--bg) 70%);
+    display: flex; align-items: center; justify-content: center; padding: 20px; }
+  #titlescreen .inner { max-width: 560px; width: 100%; }
+  #titlescreen h1 { font-size: clamp(30px, 6vw, 48px); line-height: 1.03; margin: 6px 0 4px;
+    color: var(--head); font-weight: 900; letter-spacing: -.01em; text-wrap: balance; text-shadow: 0 3px 0 #000; }
+  #titlescreen .eyebrow { color: var(--yellow); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .18em; }
+  .minis { display: flex; gap: 6px; margin: 10px 0 2px; }
+  .minis i { display: block; width: 26px; height: 34px; border-radius: 4px; border: 2px solid var(--yellow); background: var(--cream); }
+  .minis i.d { background: linear-gradient(#3a5aa0, var(--blue2)); } .minis i.g { box-shadow: 0 0 10px var(--green); border-color: var(--green); }
+  .hide { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="titlescreen"><div class="inner panel"><div class="pbody" style="padding:22px">
+  <div class="eyebrow">Hyperspell Arcade · Nº4 · Sep 2026</div>
+  <h1>Who Can See This?</h1>
+  <div class="minis" aria-hidden="true"><i></i><i class="d"></i><i></i><i class="g"></i><i class="d"></i><i></i><i></i><i class="d"></i></div>
+  <p>A document arrives with its case file: who fetched it, which rules matched, what people decided.
+  The board is the company. Flip faces up for everyone who can see it, then check. Twenty-six cases,
+  one algebra, every strange edge we argued about this week. No clock. About eight minutes, ends with a card for Slack.</p>
+  <p class="mono" id="best" style="color:var(--dim)"></p>
+  <div class="btnrow"><button class="primary" id="start">▶ Open the first case</button></div>
+  <p class="warn"><b>Honesty clause.</b> The rulings, dates, and semantics are real. Every person and document is fiction.</p>
+</div></div></div>
+
+<div id="app">
+  <header id="hud">
+    <span class="case" id="hud-case">Hyperspell Arcade</span>
+    <span class="r"><span>PTS <b id="c-pts">0</b></span><span id="c-grid" class="mono" style="letter-spacing:1px"></span></span>
+  </header>
+
+  <div id="table">
+    <section class="panel cf" id="casefile">
+      <div class="phead">Case file <span class="tag" id="cf-tag"></span></div>
+      <div class="pbody" id="cf-body"></div>
+    </section>
+    <section id="boardwrap">
+      <div id="boardtitle">The company <span class="q" id="board-q">Who can see this?</span></div>
+      <div id="board"></div>
+      <div id="rewind" class="hide">
+        <div class="lbl"><span>⟲ rewind</span><span>now ⟳</span></div>
+        <input type="range" id="rw" min="0" max="1" step="1" value="1">
+        <div class="now" id="rw-now"></div><div class="past" id="rw-past"></div>
+      </div>
+      <div id="boardfoot">
+        <div class="quick"><button data-all>All up</button><button data-none>All down</button></div>
+        <span class="hint" id="board-hint">Tap a face to flip it. Up = can see it.</span>
+        <span class="cnt" id="board-cnt"></span>
+      </div>
+      <div class="btnrow"><button class="primary" id="check">Check</button></div>
+    </section>
+  </div>
+
+  <main id="console"></main>
+</div>
+
+<script id="engine">
+'use strict';
+// ============================== ENGINE (DOM-free) ==============================
+// The algebra from the Content Rules formalization, as code. Cases assert against it at load.
+//
+//   audience(doc) = ( ⋃ audiences of sharing rules that matched at ANY of our versions and cleared
+//                     auto or were approved
+//                   ∩ ⋂ audiences of CURRENTLY active filter rules that matched, where a filter's
+//                     audience is "the people who connected the content" )
+//                   ∪ manual grants
+//
+const PEOPLE = [
+  { id: 'priya', name: 'Priya', role: 'Sales',     color: '#c2543f' },
+  { id: 'sam',   name: 'Sam',   role: 'Finance',   color: '#3f7fc2' },
+  { id: 'omar',  name: 'Omar',  role: 'Support',   color: '#4f9c5a' },
+  { id: 'lena',  name: 'Lena',  role: 'Eng',       color: '#8a5fc2' },
+  { id: 'theo',  name: 'Theo',  role: 'Eng',       color: '#c2933f' },
+  { id: 'june',  name: 'June',  role: 'People',    color: '#c23f8a' },
+  { id: 'ravi',  name: 'Ravi',  role: 'Legal',     color: '#3fb0c2' },
+  { id: 'maya',  name: 'Maya',  role: 'Marketing', color: '#6f6f6f' },
+];
+const EVERYONE = new Set(PEOPLE.map(p => p.id));
+const RULES = {
+  cf:   { name: 'Customer feedback', type: 'sharing', matcher: 'content',   audience: 'company', optin: true,  review: 0.5, auto: null },
+  ann:  { name: '#announcements',    type: 'sharing', matcher: 'attribute', audience: 'company', optin: true,  review: 0.5, auto: 1 },
+  comp: { name: 'Compensation',      type: 'filter',  matcher: 'content',   review: 0.5, auto: 0.5 },
+  med:  { name: 'Medical',           type: 'filter',  matcher: 'content',   review: 0.5, auto: 0.5 },
+};
+const members = a => a === 'company' ? new Set(EVERYONE) : a === 'none' ? new Set() : new Set([a.replace(/^u:/, '')]);
+const union = (a, b) => { for (const x of b) a.add(x); return a; };
+const inter = (a, b) => new Set([...a].filter(x => b.has(x)));
+const same = (a, b) => a.size === b.size && [...a].every(x => b.has(x));
+
+// A provenance row: { conn: 'bot' | 'u:<id>', active: bool }. Every connection carries a default sharing
+// rule: service account → company, personal → its user.
+const connectors = c => new Set(c.provenance.filter(p => p.active && p.conn !== 'bot').map(p => p.conn.slice(2)));
+// A filter narrows only while its CURRENT version matches above its threshold (filters ship with auto = any match).
+const filterHit = m => { const r = RULES[m.rule]; return r.type === 'filter' && m.current && m.conf >= r.auto; };
+
+function effectOf(c, m) {
+  const r = RULES[m.rule], enforcing = c.flags?.enforcing !== false;
+  if (r.type === 'filter') return (filterHit(m) && enforcing) ? 'filtered' : 'none';
+  const blocked = enforcing && c.matches.some(filterHit);
+  if (blocked) return 'blocked_by_filter';
+  if (m.decision === 'approved' || (r.auto != null && m.conf >= r.auto)) return 'granted';
+  if (m.decision === 'dismissed') return 'ignored';
+  return m.conf >= r.review ? 'queued' : 'ignored';
+}
+
+function audience(c) {
+  const share = new Set();
+  for (const p of c.provenance) if (p.active) union(share, members(p.conn === 'bot' ? 'company' : p.conn));
+  for (const m of c.matches) {
+    const r = RULES[m.rule];
+    if (r.type !== 'sharing') continue;
+    if (m.decision === 'approved' || (r.auto != null && m.conf >= r.auto)) union(share, members(r.audience));
+  }
+  let out = share;
+  if (c.flags?.enforcing !== false) {
+    for (const m of c.matches) if (filterHit(m)) out = inter(out, connectors(c));
+  }
+  for (const g of (c.manual || [])) union(out, members(g));
+  return out;
+}
+
+// ============================== CASES ==============================
+const D = {
+  thread:  { icon: '✉️', name: 'Re: onboarding feedback from Northwind', src: 'Gmail · personal connection' },
+  roadmap: { icon: '📄', name: 'Q4 roadmap', src: 'Confluence · shared connection (service account)' },
+  drive:   { icon: '📊', name: 'Comp philosophy 2026', src: 'Google Drive · personal connection' },
+  slack:   { icon: '💬', name: '#eng-general', src: 'Slack · shared connection (service account)' },
+  ann:     { icon: '📣', name: '#announcements', src: 'Slack · personal connection' },
+  memo:    { icon: '📝', name: 'Vendor pricing memo', src: 'Google Drive · two personal connections' },
+};
+const X = {
+  feedback: '“…the onboarding flow lost us two days. <span class="hl">Customers keep asking</span> for a sandbox before the contract…”',
+  payband:  '“…hiring plan attached. Note the <span class="hl">L5 band tops out at $212k</span> this cycle…”',
+  philo:    '“…we pay at the 60th percentile and we say so. <span class="hl">Band midpoints</span> are reviewed each spring…”',
+  medical:  'chunk 13 of 13 · “…Theo is out on <span class="hl">medical leave</span> until the 20th, please route his reviews…”',
+  clean:    'chunk 1 · “…standup moved to 10:15. Chunk 2 · “…the deploy is green…” · chunks 3–12 · more of the same.',
+  announce: '“📣 Office closed Monday. Payroll runs a day early.”',
+  memo:     '“…the vendor quoted 18% below list if we sign by Friday…”',
+};
+const bot = (active = true) => ({ conn: 'bot', active });
+const per = (u, active = true) => ({ conn: 'u:' + u, active });
+const S3 = new Set(['sam']), P1 = new Set(['priya']), O1 = new Set(['omar']), NONE = new Set();
+
+const CASES = [
+  // ---- the algebra, one term at a time ----
+  { id: 1, date: 'Sep 3', title: 'A personal connection', doc: D.thread, excerpt: X.feedback,
+    provenance: [per('priya')], matches: [], expect: P1,
+    reveal: { h: 'Every connection carries a default sharing rule',
+      p: `Priya's Gmail connection was created with a rule of its own: <i>matcher</i> connection.id = hers, <i>audience</i> Priya. No code path knows what an “owner” is. The connection's rule names the person.`,
+      q: 'Ingest writes a provenance row. Nothing about grants happens here.', c: 'the model, Sep 3' } },
+  { id: 2, date: 'Sep 2', title: 'A shared connection', doc: D.roadmap, excerpt: '“…Q4 themes: reliability, the new onboarding, and the pricing page refresh…”',
+    provenance: [bot()], matches: [], expect: EVERYONE,
+    reveal: { h: 'The service account\'s default rule shares with the company',
+      p: `Same mechanism, different audience. It used to be a grant written by hand after the pipeline finished. Now it is computed like everything else, from the provenance row.`,
+      q: 'It is theoretically the lowest priority grant. Part of the union.', c: 'the call, Sep 2' } },
+  { id: 3, date: 'Sep 1', title: 'A sharing rule matches. Confidence 0.71.', doc: D.thread, excerpt: X.feedback,
+    provenance: [per('priya')], optins: { cf: ['priya'] },
+    matches: [{ rule: 'cf', v: 1, conf: 0.71, current: true }], expect: P1,
+    reveal: { h: 'The ask band. Nothing widens until someone says so.',
+      p: `Above the auto threshold, act. In the ask band, queue for the Inbox. Below, ignore. Until the scorer delivers confidence, the judge is binary and every sharing match asks. Priya gets a card. The company gets nothing yet.`,
+      q: 'Record all matches, whether or not we act on them. Then decide how to apply.', c: 'the call, Sep 1' } },
+  { id: '3b', date: 'Sep 1', title: 'Priya opens her Inbox', doc: D.thread, excerpt: X.feedback, inbox: true,
+    provenance: [per('priya')], optins: { cf: ['priya'] },
+    matches: [{ rule: 'cf', v: 1, conf: 0.71, current: true }], expectAfterShare: EVERYONE, expectAfterDismiss: P1,
+    reveal: { h: 'Approve is not a special path',
+      p: `Share records a decision on the match rows. Apply reads it and mints one grant with reason <i>rule</i>, decided by Priya. One writer of effects. Dismiss records the other decision and mints nothing.`,
+      q: 'Green button on the right. We want people to share things.', c: 'the call, Sep 1' } },
+  { id: 4, date: 'Sep 1', title: 'A filter matches shared content', doc: D.roadmap, excerpt: X.payband,
+    provenance: [bot()], matches: [{ rule: 'comp', v: 1, conf: 0.93, current: true }], expect: NONE,
+    reveal: { h: 'Service-account content that matches a filter goes to nobody',
+      p: `The filter's audience is the people who connected the content. A service account is not a person, so that set is empty and the intersection is empty. One chunk, one pay band, the whole roadmap goes dark. Matches are per chunk; grants are per document.`,
+      q: 'We are matching on the chunks. We would be granting on documents.', c: 'the dry run, Aug 31' } },
+  { id: 5, date: 'Sep 1', title: 'The same filter matches personal content', doc: D.drive, excerpt: X.philo,
+    provenance: [per('sam')], matches: [{ rule: 'comp', v: 1, conf: 0.88, current: true }], expect: S3,
+    reveal: { h: 'Personal content stays with its owner',
+      p: `Until Sep 1 a filter deleted this for Sam too. The pivot: filters keep the people who connected the content, and Sam connected it. Nothing is deleted. The document never leaves him.`,
+      q: 'I don\'t actually know whether I would want the filters to apply to personal content. If I personally have access to my own salary information, that can just be in there.', c: 'the pivot, Sep 1' } },
+  { id: 6, date: 'Sep 2', title: 'Two cables, one filter', doc: D.roadmap, excerpt: X.payband,
+    provenance: [bot(), per('sam')], matches: [{ rule: 'comp', v: 1, conf: 0.93, current: true }], expect: S3,
+    reveal: { h: 'The filter keeps the connectors, and nobody else',
+      p: `The roadmap came in through the company integration and through Sam's own Drive. Two provenance rows. The company default and Sam's default both share it; the filter intersects with {Sam}. Visible to Sam and no one else, with no special case anywhere.`,
+      q: 'A document that came in through the company integration and through one person\'s own connection, and matches a filter, is visible to that person and nobody else.', c: 'the ruling, Sep 2' } },
+  { id: 7, date: 'Sep 1', title: 'Sharing rule and filter rule both match', doc: D.thread, excerpt: '“…<span class="hl">customers keep asking</span> for a sandbox. Also, HR: the <span class="hl">L5 band</span> question came up again…”',
+    provenance: [per('priya')], optins: { cf: ['priya'] },
+    matches: [{ rule: 'cf', v: 1, conf: 0.81, current: true }, { rule: 'comp', v: 1, conf: 0.77, current: true }], expect: P1,
+    reveal: { h: 'Filters beat sharing rules',
+      p: `The sharing rows get <b>blocked_by_filter</b>. The card never reaches Priya's Inbox, because approving it could do nothing. Counts and reports keep both matches; the queue does not show what cannot be acted on.`,
+      q: 'Filtering is always stronger than sharing.', c: 'the call, Sep 1 (and the ruling, Aug 25)' } },
+  { id: 8, date: 'Aug 25', title: 'Same case. The filter kill switch is OFF.', doc: D.thread, excerpt: X.feedback,
+    provenance: [per('priya')], optins: { cf: ['priya'] }, flags: { enforcing: false },
+    matches: [{ rule: 'cf', v: 1, conf: 0.81, current: true, decision: 'approved' }, { rule: 'comp', v: 1, conf: 0.77, current: true }], expect: EVERYONE,
+    reveal: { h: 'Disarmed means disarmed',
+      p: `With the app's filter flag off, the filter match is a fact with no consequence. The sharing match is not blocked, Priya's approval stands, and the company sees it. A switch that is off enforces nothing.`,
+      q: 'If we\'re not enforcing we don\'t enforce. It would be an incredibly confusing user experience to say we aren\'t enforcing and enforce anyway.', c: 'the ruling, Aug 25' } },
+  { id: 9, date: 'Sep 2', title: 'The roadmap went to nobody. An admin clicks Share.', doc: D.roadmap, excerpt: X.payband,
+    provenance: [bot()], matches: [{ rule: 'comp', v: 1, conf: 0.93, current: true }], manual: ['company'], expect: EVERYONE,
+    reveal: { h: 'Manual grants are the final word',
+      p: `A manual grant sits outside the algebra entirely: ∪ manual, after everything. Apply rewrites rule grants and never touches a manual row. The filter still matched. It just does not get a vote on this row.`,
+      q: 'Being able as a human to share documents and then not be surprised afterwards is the design goal.', c: 'the dry run, Aug 31; pinned Sep 2' } },
+
+  // ---- the rewind: sticky versus live, versions ----
+  { id: 10, date: 'Sep 2', title: 'Shared last week. The rule is paused today.', doc: D.thread, excerpt: X.feedback, rewind: [
+      { label: 'Aug 30 · “Customer feedback” v1 matched, Priya shared', provenance: [per('priya')], optins: { cf: ['priya'] },
+        matches: [{ rule: 'cf', v: 1, conf: 0.71, current: true, decision: 'approved' }] },
+      { label: 'Sep 2 · admin PAUSES the rule', provenance: [per('priya')], optins: { cf: ['priya'] }, paused: ['cf'],
+        matches: [{ rule: 'cf', v: 1, conf: 0.71, current: false, decision: 'approved' }] } ],
+    expect: EVERYONE,
+    reveal: { h: 'Sharing is sticky',
+      p: `Off is forward-only. Pausing or deleting a sharing rule leaves its grants standing; the grant row is the record that the rule once fired. The green glow marks what a rewind cannot undo.`,
+      q: 'If it has been shared to an audience once through a content-based sharing rule, it will always be visible to the audience, unless it gets filtered later.', c: 'the formalization, Sep 2' } },
+  { id: 11, date: 'Sep 2', title: 'Filtered to nobody. The filter is deleted today.', doc: D.roadmap, excerpt: X.payband, rewind: [
+      { label: 'Aug 30 · “Compensation” v1 matched the roadmap', provenance: [bot()], matches: [{ rule: 'comp', v: 1, conf: 0.93, current: true }] },
+      { label: 'Sep 2 · admin DELETES the filter', provenance: [bot()], deleted: ['comp'], matches: [{ rule: 'comp', v: 1, conf: 0.93, current: false }] } ],
+    expect: EVERYONE,
+    reveal: { h: 'Filters are live',
+      p: `Only currently active filter matches count. Delete the rule and the next apply re-widens the roadmap to the company default. No model call; apply is arithmetic. Deletion appends a version row with <i>deleted</i> set; the old match stays for the record.`,
+      q: 'However, if we remove a filter, a document doesn\'t have to remain filtered.', c: 'the formalization, Sep 2' } },
+  { id: 12, date: 'Sep 2', title: 'Shared at v1. The rule is edited to v2, which does not match.', doc: D.thread, excerpt: X.feedback, rewind: [
+      { label: 'Aug 30 · v1 matched, Priya shared', provenance: [per('priya')], optins: { cf: ['priya'] },
+        matches: [{ rule: 'cf', v: 1, conf: 0.71, current: true, decision: 'approved' }] },
+      { label: 'Sep 2 · rule edited → v2. Re-evaluated: v2 does NOT match', provenance: [per('priya')], optins: { cf: ['priya'] },
+        matches: [{ rule: 'cf', v: 1, conf: 0.71, current: false, decision: 'approved' }, { rule: 'cf', v: 2, conf: 0.12, current: true }] } ],
+    expect: EVERYONE,
+    reveal: { h: 'Historical sharing versions count',
+      p: `The grant audiences are the union of every sharing rule that ever matched, at any of our versions. The match row holds only the latest verdict; the grant row remembers. Editing a rule appends a version, nothing is updated in place.`,
+      q: 'We evaluate all historical versions of a sharing rule too. Our versions, not the vendor\'s; we match at most once per our version.', c: 'the formalization, Sep 2' } },
+  { id: 13, date: 'Sep 2', title: 'Filtered at v1. The filter is edited to v2, which does not match.', doc: D.roadmap, excerpt: X.payband, rewind: [
+      { label: 'Aug 30 · “Compensation” v1 matched', provenance: [bot()], matches: [{ rule: 'comp', v: 1, conf: 0.93, current: true }] },
+      { label: 'Sep 2 · filter edited → v2. Re-evaluated: v2 does NOT match', provenance: [bot()],
+        matches: [{ rule: 'comp', v: 1, conf: 0.93, current: false }, { rule: 'comp', v: 2, conf: 0.08, current: true }] } ],
+    expect: EVERYONE,
+    reveal: { h: 'Only current filter versions count',
+      p: `The mirror image of case 12. A filter narrows only while its current version matches. The v1 match is superseded and gets effect <b>none</b>; the roadmap re-widens. Sticky one way, live the other. That asymmetry is the whole design.`,
+      q: 'Minus the intersection of all current active filter rules that are matching.', c: 'the formalization, Sep 2' } },
+
+  // ---- the edge pack ----
+  { id: 14, date: 'Sep 3', title: 'Priya dismissed it. A reply arrives and the thread is re-indexed.', doc: D.thread, excerpt: X.feedback, choice: true,
+    setup: `Aug 30: “Customer feedback” v1 matched at 0.71. Priya pressed <b>Dismiss</b>. Sep 3: a reply lands, the thread is re-indexed at the same rule version.`,
+    options: [ { t: 'It stays dismissed. Her decision is on the rows.', ok: false },
+               { t: 'It asks again. Re-indexing recreated the chunks.', ok: true },
+               { t: 'It auto-shares. The reply pushed confidence up.', ok: false } ],
+    reveal: { h: 'A changed document is a new question',
+      p: `Re-indexing a changed document recreates its chunks, so the old match rows, decision included, cascade away and it is judged fresh. Only <i>unchanged</i> content never re-asks a settled question. Had Priya pressed Share instead, the grant row would have survived: sharing is sticky, dismissal is not.`,
+      q: 'Re-evaluation at the same rule version keeps the decision. Re-indexing a changed document recreates its chunks, so the old rows cascade away.', c: 'the upsert rules, Sep 3' } },
+  { id: 15, date: 'Sep 2', title: 'Two people fetched this memo. Sam leaves the company.', doc: D.memo, excerpt: X.memo, jenga: 'sam',
+    provenance: [per('sam'), per('priya')], matches: [], expectBefore: new Set(['sam', 'priya']), expect: P1,
+    reveal: { h: 'A document outlives its first ingester',
+      p: `Sam's provenance row flips inactive, his connection's default rule gets a deleted version, apply removes the grant it contributed. Priya's row is untouched, so the memo stays with Priya. Rows are never deleted.`,
+      q: 'If there are any connections remaining, we leave the document. We want that data.', c: 'the call, Sep 2' } },
+  { id: 16, date: 'Sep 2', title: 'Now Priya leaves too. Pull the last cable.', doc: D.memo, excerpt: X.memo, jenga: 'priya', open: true,
+    provenance: [per('sam', false), per('priya')], matches: [], expectBefore: P1,
+    reveal: { h: 'The PRD does not answer this yet',
+      p: `Every connection that fetched it is gone. Keep its computed grants standing, or drop to ∅? The rows stay either way. This case scores whatever you answered; the point is that the question is open, and the game will not pretend otherwise.`,
+      q: 'We still need to define what behavior occurs if there are no connections left for a document.', c: 'the call, Sep 2 · Open Questions' } },
+  { id: 17, date: 'Sep 1', title: 'Two people, two similar threads. Only Priya opted in.', doc: D.thread, excerpt: X.feedback, choice: true,
+    setup: `Priya and Omar each get a customer email that would match “Customer feedback”. Priya turned the rule on in Personal → Sharing. Omar did not. Which thread is judged against the rule?`,
+    options: [ { t: 'Both. The rule is company-wide once an admin writes it.', ok: false },
+               { t: 'Priya\'s only. Opt-in decides what gets evaluated.', ok: true },
+               { t: 'Neither, until an admin runs a backfill.', ok: false } ],
+    reveal: { h: 'Opt-in gates evaluation, not apply',
+      p: `Nobody's private content is judged against a sharing rule they did not enable. The draft that evaluated everything and gated at apply was rejected in one line: “that's not what we discussed.” Opt-in is forward-only; existing content needs a backfill the owner triggers.`,
+      q: 'Admins define filters, users decide whether or not the filter applies to them.', c: 'the call, Sep 1' } },
+  { id: 18, date: 'Sep 3', title: 'Omar\'s inbox. No opt-ins. A filter would match.', doc: D.thread, excerpt: X.payband,
+    provenance: [per('omar')], matches: [], expect: O1,
+    reveal: { h: 'Personal-only content with no sharing rule is never evaluated',
+      p: `There is no filter match here because there was no evaluation. Nothing can widen Omar's content, so a filter has nothing to narrow, so we do not spend a model call. The case file shows no rows because none were written.`,
+      q: 'Personal-only content whose owners enabled no sharing rule gets its default rules and nothing else.', c: 'the model, Sep 3' } },
+  { id: 19, date: 'Aug 31', title: 'An attribute rule: share everything in #announcements', doc: D.ann, excerpt: X.announce,
+    provenance: [per('priya')], optins: { ann: ['priya'] }, matches: [{ rule: 'ann', v: 1, conf: 1, current: true }], expect: EVERYONE,
+    reveal: { h: 'Deterministic rules act, never ask. And a public channel is still private.',
+      p: `The matcher is a predicate over metadata: channel = #announcements. Confidence 1, no model call, always clears auto, never appears in the Inbox. Note where it came from: Priya's personal Slack. A public channel fetched through a personal connection is private to Priya until a rule says otherwise.`,
+      q: 'But it\'s someone\'s private Slack connection.', c: 'the dry run, Aug 31 · a customer\'s admin, same day: “who approves a public channel?”' } },
+  { id: 20, date: 'Aug 31', title: 'A customer\'s admin: the queue should only hold conflicts', doc: D.thread, excerpt: X.feedback, choice: true,
+    setup: `On a customer call, their admin argued: inclusion should auto-share, and the approval queue should hold only content that also hit a filter. Under the model as built, what happens to a match that hits both?`,
+    options: [ { t: 'It goes to the Inbox as a conflict for a human to settle.', ok: false },
+               { t: 'It is blocked silently. The Inbox holds the ask band instead.', ok: true },
+               { t: 'It shares, with a warning badge.', ok: false } ],
+    reveal: { h: 'The inversion',
+      p: `Conflicts do not ask; they are <b>blocked_by_filter</b>, because approving one could do nothing. The Inbox holds the ask band: matches the judge is unsure about. Auto-share for the rest opens the day the scorer delivers confidence and the auto threshold has something to compare against.`,
+      q: 'The approval queue should only be for things that matched one of the drop filters. That\'s what should be in the approval queue.', c: 'a customer\'s admin, played back on the call, Aug 31' } },
+  { id: 21, date: 'Sep 2', title: 'Thirteen chunks of #eng-general. One mentions medical leave.', doc: D.slack, excerpt: X.clean + ' ' + X.medical,
+    provenance: [bot()], matches: [{ rule: 'med', v: 1, conf: 0.9, current: true, chunk: 13 }], expect: NONE,
+    reveal: { h: 'Long documents converge to filtered',
+      p: `Matches are per chunk, grants are per document. A channel that never stops growing will eventually hold one chunk that matches some filter, and the whole channel goes dark for everyone. Chunk-level grants would fix it and are named as orthogonal work, not built.`,
+      q: 'As time goes on the likelihood that a filter rule matches a chunk in that document converges to 1. In the limit all Slack channels will be unshared.', c: 'the formalization, open question 2' } },
+  { id: 22, date: 'Aug 26', title: 'Two chunks, each clean on its own', doc: D.drive, excerpt: 'chunk 4 · “…the offer is 20% above band…” chunk 9 · “…the band midpoint for that level is $190k…”', choice: true,
+    setup: `The classifier judges one chunk at a time. Neither chunk alone names a salary. Together they do. What does the filter do?`,
+    options: [ { t: 'Flags the document. The judge sees the whole thing.', ok: false },
+               { t: 'Passes both. The combination is invisible to a per-chunk judge.', ok: true },
+               { t: 'Flags chunk 9 only, because of the dollar sign.', ok: false } ],
+    reveal: { h: 'A chunk may not leak. The combination might.',
+      p: `Raised by an engineer on the Aug 26 review and added to the PRD as an open question. Per-chunk judgement is what makes evaluation cheap and incremental; it is also why this slips through. Multi-part evaluation, one chunk as subject with the rest as context, is the scorer's answer, not yet ours.`,
+      q: 'A chunk by itself might not have any leaky information. But when you combine the chunks of the document, the picture becomes very clear.', c: 'dev office hours, Aug 26' } },
+  { id: 23, date: 'Sep 1', title: '“Only share with Team 3.” Two ways to write it.', doc: D.roadmap, excerpt: X.payband, choice: true,
+    setup: `One instinct: an ordered list like a firewall, <i>block all, then allow Team 3</i>. The other: two rule kinds, sharing rules OR'd, filter rules AND'd, no order. Play the same rules in a different order. Does the board change?`,
+    options: [ { t: 'Yes. Later rules override earlier ones.', ok: false },
+               { t: 'No. Union and intersection do not care about order.', ok: true } ],
+    reveal: { h: 'Order-free algebra beats ordered rules',
+      p: `“Only Team 3” is a filter whose audience is Team 3, ANDed with whatever sharing said. Same result in any order, no precedence table to maintain. Whether anyone ever needs team-scoped filters is still deferred; the algebra is ready if they do.`,
+      q: 'I think the exclusion rules being only is adding an order of magnitude of complexity.” “Not trivial, but it also doesn\'t produce any inconsistencies. It\'s Boolean logic. The order in the end doesn\'t matter.', c: 'the argument, Sep 1' } },
+  { id: 24, date: 'Sep 2', title: 'Teams, as a partially ordered set. An API key scoped to ∅.', doc: D.roadmap, excerpt: '∅ → users → teams → company → public', choice: true,
+    setup: `Audiences form a poset: ∅ at the bottom, then each user, then teams, then the company, then public on top. A caller sees a document if the caller sits at or below one of its grants. An agent's key gets audience ∅. What does it see?`,
+    options: [ { t: 'Nothing. Its audience is empty.', ok: false },
+               { t: 'Only public documents.', ok: false },
+               { t: 'Everything. ∅ is below every node.', ok: true } ],
+    reveal: { h: 'The empty audience is the god-mode key',
+      p: `∅ is ordered below every other element, so it is at or below every grant there is. “Nobody” as a scope means “no restriction” as a key. The Teams page states it plainly; the API-key work has to guard it deliberately.`,
+      q: 'Note that god mode is possible by setting the audience to the null element ∅. Since it is ordered below any other elements, it will always evaluate as being able to see data of all nodes above it.', c: 'the Teams page' } },
+  { id: 25, date: 'Sep 1', title: 'The old approval queue, version one. An admin opens it.', doc: D.thread, excerpt: X.feedback, choice: true,
+    setup: `Before the Inbox existed, matched content showed up in an admin-side queue. June is an admin. She opens it. What does she see?`,
+    options: [ { t: 'Her own matched documents.', ok: false },
+               { t: 'Everyone\'s matched documents, including Priya\'s private email.', ok: true },
+               { t: 'Counts only, no content.', ok: false } ],
+    reveal: { h: 'The bug that made the Inbox per-user',
+      p: `Flagged by a colleague as an oversight, not wrong. The intended flow was always: admins define rules, each person decides whether a rule applies to their own content and sees only their own matches. That holds for admins too. Owner equals caller is the whole guard now.`,
+      q: 'V1 was not user-scoped, and it was basically that every admin saw everyone\'s matching content.', c: 'the call, Sep 1' } },
+  { id: 26, date: 'Sep 1', title: 'The old Preview button. Rules edited mid-run.', doc: D.roadmap, excerpt: '“scanned 73,000 · matched 412 · running…”', choice: true,
+    setup: `Preview started an unbounded scan over every document. While it ran, someone added a filter, edited two, deleted one, and added another, then looked at the results. What do the results mean?`,
+    options: [ { t: 'The state of the rules when the scan started.', ok: false },
+               { t: 'The current rules, applied live.', ok: false },
+               { t: 'Nothing anyone can name.', ok: true } ],
+    reveal: { h: 'The vortex',
+      p: `A retroactive run is a snapshot of the rules at start, evaluated by a non-deterministic judge, streamed into a UI that only shows one run, with the evidence riding a workflow payload behind four layers of caps. Any edit blanked the calibration. The fix was to record matches as facts at ingest and delete Preview.`,
+      q: 'What do those results actually mean now when I\'ve made a whole bunch of changes while it\'s running?', c: 'the call, Sep 1' } },
+];
+
+// Self-check: every board case's expected answer must equal the algebra's answer.
+function selfCheck() {
+  const bad = [];
+  for (const c of CASES) {
+    if (c.choice) continue;
+    if (c.inbox) {
+      const a = audience(Object.assign({}, c, { matches: c.matches.map(m => Object.assign({}, m, { decision: 'approved' })) }));
+      if (!same(a, c.expectAfterShare)) bad.push(c.id + ' (share)');
+      const d = audience(Object.assign({}, c, { matches: c.matches.map(m => Object.assign({}, m, { decision: 'dismissed' })) }));
+      if (!same(d, c.expectAfterDismiss)) bad.push(c.id + ' (dismiss)');
+      continue;
+    }
+    if (c.jenga) {
+      if (!same(audience(c), c.expectBefore)) bad.push(c.id + ' (before)');
+      const after = Object.assign({}, c, { provenance: c.provenance.map(p => p.conn === 'u:' + c.jenga ? Object.assign({}, p, { active: false }) : p) });
+      if (!c.open && !same(audience(after), c.expect)) bad.push(c.id + ' (after)');
+      continue;
+    }
+    const st = c.rewind ? Object.assign({}, c, c.rewind[c.rewind.length - 1]) : c;
+    if (!same(audience(st), c.expect)) bad.push(c.id);
+  }
+  return bad;
+}
+</script>
+
+<script>
+'use strict';
+// ============================== UI ==============================
+const $ = s => document.querySelector(s);
+const el = h => { const d = document.createElement('div'); d.innerHTML = h.trim(); return d.firstElementChild; };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const P = Object.fromEntries(PEOPLE.map(p => [p.id, p]));
+const G = { i: 0, pts: 0, grid: [], tries: 0, up: new Set(), locked: false, state: null, step: 0 };
+
+const bad = selfCheck();
+if (bad.length) console.error('Case self-check failed:', bad);
+
+function hud() {
+  const c = CASES[G.i];
+  $('#hud-case').textContent = c ? `Case ${c.id} of 26 · ${c.date}` : 'Debrief';
+  $('#c-pts').textContent = G.pts;
+  $('#c-grid').textContent = G.grid.join('');
+}
+function put(html) {
+  const card = el(`<section class="card panel">${html}</section>`);
+  $('#console').prepend(card);   // newest first: the board stays in view, history sinks
+  return card;
+}
+const pcard = (title, body, tag = '') => `<div class="phead">${title}${tag ? `<span class="tag">${tag}</span>` : ''}</div><div class="pbody">${body}</div>`;
+const names = set => { const a = [...set]; if (a.size === 0 || a.length === 0) return 'nobody';
+  if (a.length === PEOPLE.length) return 'everyone at the company';
+  return a.map(id => P[id].name).join(', '); };
+
+// ---------- case file ----------
+function renderCaseFile(c, st) {
+  $('#cf-tag').textContent = `Nº${c.id} · ${c.date}`;
+  const prov = (st.provenance || []).map((p, i) => `
+    <div class="row ${p.active ? '' : 'off'}" data-prov="${i}">
+      <span class="cable ${p.conn === 'bot' ? 'bot' : 'per'}"></span>
+      <span class="who">${p.conn === 'bot' ? 'Service account' : P[p.conn.slice(2)].name}</span>
+      <span class="k">${p.conn === 'bot' ? 'app scope → company' : 'user scope → ' + P[p.conn.slice(2)].name}</span>
+      ${c.jenga === (p.conn.slice(2)) && p.active && !G.pulled ? `<button class="pull" data-pull="${p.conn.slice(2)}">Pull cable</button>` : ''}
+    </div>`).join('');
+  const optins = Object.entries(st.optins || {}).map(([r, us]) =>
+    `<div class="row"><span class="badge share">opt-in</span><span class="who">${us.map(u => P[u].name).join(', ')}</span><span class="k">→ ${RULES[r].name}</span></div>`).join('');
+  const matches = (st.matches || []).map(m => {
+    const r = RULES[m.rule];
+    const paused = (st.paused || []).includes(m.rule), deleted = (st.deleted || []).includes(m.rule);
+    return `<div class="row">
+      <span class="badge ${r.type === 'filter' ? 'filter' : 'share'}">${r.type}</span>
+      <span class="who">${r.name}</span>
+      <span class="badge ${m.current ? '' : 'old'}" style="${m.current ? 'background:#26304a;color:#b9c9ff' : ''}">v${m.v}${m.current ? '' : ' · superseded'}</span>
+      ${r.matcher === 'attribute' ? '<span class="badge attr">attribute</span>' : ''}
+      ${m.chunk ? `<span class="k">chunk ${m.chunk}</span>` : ''}
+      ${m.decision ? `<span class="badge dec">${m.decision}</span>` : ''}
+      ${paused ? '<span class="badge old">rule paused</span>' : ''}${deleted ? '<span class="badge old">rule deleted</span>' : ''}
+      <span class="conf">conf ${m.conf.toFixed(2)}</span></div>`;
+  }).join('');
+  const manual = (st.manual || []).map(g => `<div class="row"><span class="badge dec">manual</span><span class="who">shared with ${g === 'company' ? 'the company' : P[g.slice(2)].name}</span><span class="k">by an admin</span></div>`).join('');
+  const enforcing = st.flags?.enforcing !== false;
+  $('#cf-body').innerHTML = `
+    <div class="doc"><div class="ico">${c.doc.icon}</div><div><div class="nm">${c.doc.name}</div><div class="src">${c.doc.src}</div></div></div>
+    <div class="excerpt">${c.excerpt}</div>
+    ${c.setup ? `<h4>Situation</h4><p style="font-size:13.5px;margin:4px 0">${c.setup}</p>` : `
+    <h4>Provenance · who fetched it</h4>${prov || '<div class="empty">no rows</div>'}
+    <h4>Rule matches</h4>${matches || '<div class="empty">no rows written</div>'}
+    ${optins ? `<h4>Opt-ins</h4>${optins}` : ''}
+    ${manual ? `<h4>Manual grants</h4>${manual}` : ''}
+    <h4>Flags</h4><div class="flag"><span class="lamp ${enforcing ? '' : 'off'}"></span> filter rules ${enforcing ? 'enforcing' : 'DISARMED'}</div>`}`;
+  $('#cf-body').querySelectorAll('[data-pull]').forEach(b => b.onclick = () => pullCable(b.dataset.pull));
+}
+
+// ---------- board ----------
+function renderBoard(showSet = null, glow = new Set()) {
+  const board = $('#board'); board.innerHTML = '';
+  for (const p of PEOPLE) {
+    const up = showSet ? showSet.has(p.id) : G.up.has(p.id);
+    const f = el(`<div class="face ${up ? '' : 'down'} ${glow.has(p.id) ? 'glow' : ''} ${G.locked || showSet ? 'locked' : ''}" data-id="${p.id}" role="button" aria-pressed="${up}" tabindex="0">
+      <div class="in">
+        <div class="side front"><div class="av" style="background:${p.color}">${p.name[0]}</div><div class="nm">${p.name}</div><div class="rl">${p.role}</div></div>
+        <div class="side back"><div class="qm">?</div><div class="nm">${p.name}</div></div>
+      </div></div>`);
+    const toggle = () => { if (G.locked || showSet) return; if (G.up.has(p.id)) G.up.delete(p.id); else G.up.add(p.id);
+      f.classList.toggle('down', !G.up.has(p.id)); f.setAttribute('aria-pressed', G.up.has(p.id)); count(); };
+    f.onclick = toggle; f.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } };
+    board.appendChild(f);
+  }
+  count();
+}
+function count() { const n = G.up.size; $('#board-cnt').textContent = n === 0 ? 'nobody' : n === PEOPLE.length ? 'everyone' : `${n} up`; }
+function setBoard(set) { G.up = new Set(set); renderBoard(); }
+$('#boardfoot [data-all]').onclick = () => { if (!G.locked) setBoard(EVERYONE); };
+$('#boardfoot [data-none]').onclick = () => { if (!G.locked) setBoard([]); };
+
+// sticky grants glow green: sharing-rule grants and manual grants (what a rewind cannot undo)
+function stickySet(st) {
+  const s = new Set();
+  for (const m of st.matches || []) { const r = RULES[m.rule];
+    if (r.type === 'sharing' && (m.decision === 'approved' || (r.auto != null && m.conf >= r.auto))) union(s, members(r.audience)); }
+  for (const g of st.manual || []) union(s, members(g));
+  return s;
+}
+
+// ---------- rewind ----------
+function setupRewind(c) {
+  const rw = $('#rewind'); rw.classList.remove('hide');
+  const input = $('#rw'); input.max = c.rewind.length - 1; input.value = c.rewind.length - 1;
+  const show = () => {
+    const k = +input.value, st = Object.assign({}, c, c.rewind[k]);
+    G.step = k;
+    const isNow = k === c.rewind.length - 1;
+    $('#rw-now').textContent = c.rewind[k].label + (isNow ? '  ← now' : '');
+    $('#rw-past').textContent = isNow ? 'Your turn: who can see it now?' : `Then: visible to ${names(audience(st))}. Green = a grant no rewind can undo.`;
+    renderCaseFile(c, st);
+    if (isNow) renderBoard(); else renderBoard(audience(st), stickySet(st));
+    $('#check').disabled = !isNow;
+  };
+  input.oninput = show; show();
+}
+
+// ---------- jenga ----------
+function pullCable(u) {
+  const c = CASES[G.i];
+  G.pulled = true;
+  G.state = Object.assign({}, c, { provenance: c.provenance.map(p => p.conn === 'u:' + u ? Object.assign({}, p, { active: false }) : p) });
+  renderCaseFile(c, G.state);
+  $('#board-q').textContent = 'Who can see this now?';
+  $('#board-hint').textContent = `${P[u].name} is gone. Flip the faces, then check.`;
+  $('#check').disabled = false;
+  put(pcard('Cable pulled', `<p>${P[u].name}'s connection is removed. The provenance row flips inactive; the connection's default rule gets a deleted version; apply re-runs for every document with a row on that connection.</p>`, `Nº${c.id}`));
+}
+
+// ---------- flow ----------
+function openCase() {
+  const c = CASES[G.i];
+  if (!c) return debrief();
+  G.tries = 0; G.locked = false; G.pulled = false; G.up = new Set(); G.state = c;
+  $('#rewind').classList.add('hide'); $('#check').disabled = false;
+  $('#board-q').textContent = 'Who can see this?'; $('#board-hint').textContent = 'Tap a face to flip it. Up = can see it.';
+  hud();
+  renderCaseFile(c, c.rewind ? Object.assign({}, c, c.rewind[c.rewind.length - 1]) : c);
+  if (c.choice) { renderBoard(new Set(), new Set()); askChoice(c); }
+  else if (c.inbox) { G.up = new Set(audience(c)); renderBoard(); inboxCard(c); }
+  else if (c.jenga) { G.up = new Set(audience(c)); renderBoard();
+    $('#board-hint').textContent = `Right now: visible to ${names(audience(c))}. Pull the cable in the case file.`; $('#check').disabled = true; }
+  else if (c.rewind) { renderBoard(); setupRewind(c); }
+  else renderBoard();
+  put(pcard(`Case ${c.id} · ${c.title}`, `<p>${c.choice ? 'Read the situation, then pick an answer.' : c.inbox ? 'A card is waiting in the Inbox below.' : c.jenga ? 'Pull the cable in the case file, then answer.' : c.rewind ? 'Drag the lever back to see how it got here. Then answer for now.' : 'Read the case file. Flip faces up for everyone who can see this document, then press Check.'}</p>`, c.date));
+  $('#table').scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
+}
+
+function award(first) { const pts = first ? 3 : 1; G.pts += pts; G.grid.push(first ? '🟩' : '🟨'); hud(); return pts; }
+function flunk() { G.grid.push('⬛'); hud(); }
+
+$('#check').onclick = () => {
+  const c = CASES[G.i]; if (!c || G.locked) return;
+  const st = c.rewind ? Object.assign({}, c, c.rewind[c.rewind.length - 1]) : (G.state || c);
+  const truth = audience(st);
+  if (c.open) {   // case 16: no right answer exists yet
+    G.locked = true; G.pts += 3; G.grid.push('🟦'); hud();
+    reveal(c, `<p class="mid">You answered: <b>${names(G.up)}</b>. The PRD has not.</p>`);
+    return;
+  }
+  G.tries++;
+  if (same(G.up, truth)) {
+    G.locked = true; const pts = award(G.tries === 1);
+    renderBoard(truth, stickySet(st));
+    reveal(c, `<p class="ok">Correct on try ${G.tries} · +${pts}. Visible to <b>${names(truth)}</b>.</p>`);
+  } else {
+    const wrong = [...PEOPLE].filter(p => G.up.has(p.id) !== truth.has(p.id));
+    wrong.forEach(p => { const f = $(`.face[data-id="${p.id}"]`); f.classList.remove('wrong'); void f.offsetWidth; f.classList.add('wrong'); });
+    if (G.tries === 1) { $('#board-hint').textContent = `${wrong.length} face${wrong.length > 1 ? 's' : ''} wrong. One more try, for 1 point.`; }
+    else { G.locked = true; flunk(); G.up = new Set(truth); renderBoard(truth, stickySet(st));
+      reveal(c, `<p class="no">Not quite. Visible to <b>${names(truth)}</b>.</p>`); }
+  }
+};
+
+function askChoice(c) {
+  $('#board-q').textContent = 'What happens?'; $('#board-hint').textContent = 'Answer in the card below.'; $('#check').disabled = true;
+  const card = put(pcard('Your call', `<div class="choices">${c.options.map((o, i) => `<button data-o="${i}">${o.t}</button>`).join('')}</div>`, `Nº${c.id}`));
+  card.querySelectorAll('[data-o]').forEach(b => b.onclick = () => {
+    if (G.locked) return; G.tries++;
+    const o = c.options[+b.dataset.o];
+    if (o.ok) { G.locked = true; b.classList.add('picked-right'); card.querySelectorAll('button').forEach(x => x.disabled = true);
+      const pts = award(G.tries === 1); reveal(c, `<p class="ok">Right on try ${G.tries} · +${pts}.</p>`); }
+    else { b.classList.add('picked-wrong'); b.disabled = true;
+      if (G.tries >= 2) { G.locked = true; flunk(); card.querySelectorAll('button').forEach(x => { x.disabled = true; if (c.options[+x.dataset.o].ok) x.classList.add('picked-right'); });
+        reveal(c, `<p class="no">Not quite.</p>`); } }
+  });
+}
+
+function inboxCard(c) {
+  $('#board-q').textContent = 'Decide in the Inbox, then answer'; $('#check').disabled = true;
+  const r = RULES[c.matches[0].rule];
+  const card = put(pcard('Inbox · 1 waiting', `
+    <div class="doc"><div class="ico">${c.doc.icon}</div><div><div class="nm">${c.doc.name}</div><div class="src">${c.doc.src} · <span class="badge share" title="${r.name}: content a customer said about our product">${r.name}</span></div></div></div>
+    <div class="excerpt">${c.excerpt}</div>
+    <div class="inboxrow"><button class="dismiss" data-d>Dismiss</button><button class="share" data-s>Share with the company</button></div>`, 'Priya'));
+  const decide = dec => {
+    card.querySelectorAll('button').forEach(x => x.disabled = true);
+    G.state = Object.assign({}, c, { matches: c.matches.map(m => Object.assign({}, m, { decision: dec })) });
+    renderCaseFile(c, G.state);
+    $('#board-q').textContent = 'Who can see this now?'; $('#board-hint').textContent = `You pressed ${dec === 'approved' ? 'Share' : 'Dismiss'}. Flip the faces, then check.`;
+    $('#check').disabled = false; G.locked = false;
+    put(pcard(dec === 'approved' ? 'Decision recorded: share' : 'Decision recorded: dismiss', `<p>${dec === 'approved' ? 'The match rows now carry <i>decision = approved, decided by Priya</i>. Apply runs for this one document.' : 'The match rows now carry <i>decision = dismissed</i>. Apply runs and mints nothing. The queue pulls the next card into view; this one reads “You\'re all caught up”.'}</p>`));
+  };
+  card.querySelector('[data-s]').onclick = () => decide('approved');
+  card.querySelector('[data-d]').onclick = () => decide('dismissed');
+}
+
+function effectsReadout(st) {
+  const rows = (st.matches || []).map(m => { const e = effectOf(st, m), cls = e === 'granted' ? 'ok' : e === 'filtered' || e === 'blocked_by_filter' ? 'no' : e === 'queued' ? 'mid' : 'k';
+    return `<span class="k">${RULES[m.rule].name} v${m.v}</span> → <span class="${cls}">${e}</span>`; });
+  const inputs = [];
+  for (const p of st.provenance || []) if (p.active) inputs.push(`<span class="k">default</span> ${p.conn === 'bot' ? 'company' : P[p.conn.slice(2)].name}`);
+  if (!rows.length && !inputs.length) return '';
+  return `<div class="readout">${[...inputs, ...rows].join('<br>')}<br><span class="k">audience</span> = <b>${names(audience(st))}</b></div>`;
+}
+
+function reveal(c, verdict) {
+  const st = c.rewind ? Object.assign({}, c, c.rewind[c.rewind.length - 1]) : (G.state || c);
+  const card = put(pcard(c.reveal.h, `
+    ${verdict}
+    ${c.choice ? '' : effectsReadout(st)}
+    <p>${c.reveal.p}</p>
+    <blockquote>${c.reveal.q}<br><span class="cite">— ${c.reveal.c}</span></blockquote>
+    <div class="btnrow"><button class="primary" data-n>${G.i + 1 < CASES.length ? 'Next case →' : 'Close the casebook →'}</button></div>`, `Nº${c.id} · ${c.date}`));
+  card.querySelector('[data-n]').onclick = () => { G.i++; openCase(); };
+}
+
+// ============================== DEBRIEF ==============================
+function debrief() {
+  hud(); $('#board-q').textContent = 'Casebook closed'; $('#check').disabled = true; $('#board-hint').textContent = '';
+  renderBoard(EVERYONE, new Set());
+  const max = CASES.length * 3;
+  const frac = G.pts / max;
+  const title = frac >= .9 ? 'Chief Explainability Officer' : frac >= .72 ? 'Set Theorist' : frac >= .5 ? 'Rule Reader' : frac >= .3 ? 'Cable Puller' : 'Guesser';
+  const rows = []; for (let i = 0; i < G.grid.length; i += 13) rows.push(G.grid.slice(i, i + 13).join(''));
+  const card = `WHO CAN SEE THIS? 🃏\n${title} · ${G.pts}/${max} pts\n${rows.join('\n')}\nhyperspell.github.io/arcade`;
+  const best = +(localStorage.getItem('who-can-see-this-best') || 0);
+  if (G.pts > best) localStorage.setItem('who-can-see-this-best', G.pts);
+  const c = put(pcard('Share your casebook', `
+    <pre class="sharecard">${card}</pre>
+    <div class="btnrow"><button class="primary" data-c>Copy the card</button><button data-a>Play again</button></div>
+    <p class="warn">Built by the <a href="https://hyperspell.com">Hyperspell</a> team.</p>`));
+  put(pcard('The algebra, one last time', `
+    <div class="algebra">audience(document) =
+    ( <b>⋃</b> audiences of sharing rules that matched at <b>any</b> of our versions, auto or approved
+    <b>∩</b> <b>⋂</b> audiences of <b>currently active</b> filter rules that matched,
+        where a filter keeps <b>the people who connected the content</b> )
+    <b>∪</b> manual grants</div>
+    <p>Sharing is sticky. Filters are live. Filters beat sharing rules. Manual grants beat everything. Evaluate never acts; apply never calls a model. Every grant is explainable from our own database: which connection, which rule version, who decided.</p>`));
+  put(pcard('Casebook · the cases that did not get a board', `
+    <ul class="log" style="margin-top:0">
+      <li>The customer promise changes: “never enters the system” becomes “never leaves its owner” for personal integrations.</li>
+      <li>A filtered document keeps a reference, so re-ingesting it does not re-judge it.</li>
+      <li>Retroactive runs are priced to discourage them. They cost the vendor too.</li>
+      <li>Key-written content follows the writing key's audience.</li>
+      <li>Before the read path flips to computed grants, every document's computed set must equal its existing set, differences explained or fixed.</li>
+      <li>A grant whose only authority was a workflow history that aged out is the failure this replaces.</li>
+      <li>Deleting the company default rule is a legitimate “share nothing by default”. Deleting a personal default hides a person from their own content. Open.</li>
+      <li>An admin editing a filter's audiences could hide content from its own ingester. Fixed for now. Open.</li>
+      <li>Permissions with a clock, for interns. Asked for, not built.</li>
+      <li>Agents need an identity before anyone can grant them anything. Every permission system was built for people.</li>
+      <li>Directory-sync offboarding deletes a person's data outright; the provenance model has to say what that means for a document someone else also fetched.</li>
+      <li>Public sits above Company in the poset, for the day documentation is shared outside.</li>
+    </ul>`));
+  put(pcard('Debrief · where this actually stands', `
+    <div class="score">${title} · ${G.pts}/${max} pts</div>
+    <p style="color:var(--dim)">${G.pts > best ? 'new best · ' : ''}${G.grid.filter(g => g === '🟩').length} first-try, ${G.grid.filter(g => g === '🟨').length} second-try, ${G.grid.filter(g => g === '⬛').length} shown the answer</p>
+    <p>The algebra, the tables, and the three steps are the design as of Sep 3. Two admin and personal surfaces shipped this week; the computed-grants cutover, the opt-in table, and the scorer's confidence bands are coming. Nothing in this game claims they are live.</p>`));
+  c.querySelector('[data-c]').onclick = function () {
+    navigator.clipboard.writeText(card).then(() => { this.textContent = 'Copied ✓'; }).catch(() => { this.textContent = 'Select & copy above'; });
+  };
+  c.querySelector('[data-a]').onclick = () => location.reload();
+}
+
+// ============================== boot ==============================
+const bestV = localStorage.getItem('who-can-see-this-best');
+if (bestV) $('#best').textContent = 'BEST CASEBOOK: ' + bestV + ' pts';
+$('#start').onclick = () => { $('#titlescreen').remove(); openCase(); };
+renderBoard(EVERYONE); hud();
+</script>
+</body>
+</html>
