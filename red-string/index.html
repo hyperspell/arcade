@@ -97,6 +97,34 @@
   .scrawl { position: absolute; transform: translate(-50%, -50%) rotate(var(--rot, -4deg)); font-family: var(--marker); font-weight: 900; color: #161412;
     font-size: clamp(14px, 3.4vw, 34px); letter-spacing: .04em; line-height: .95; pointer-events: none; text-shadow: 0 0 1px rgba(0,0,0,.4); opacity: .92; white-space: nowrap; }
   .scrawl.red { color: #c81e27; }
+  /* ---------- scale with the wall (container query units; 1cqw = wall width / 100) ---------- */
+  #wall { container-type: inline-size; }
+  .pin { width: 12.3cqw; min-height: 6.6cqw; padding: 1.8cqw .95cqw .95cqw; font-size: 1.2cqw; border-radius: .1cqw; }
+  .pin::before { width: 1.15cqw; height: 1.15cqw; top: .6cqw; }
+  .pin .t { font-size: 1.25cqw; } .pin .s { font-size: 1.1cqw; margin-top: .2cqw; }
+  .pin.doc { padding-bottom: 2.7cqw; }
+  .pin.doc::after, .pin.rule::after, .pin.table::after { left: .95cqw; right: .95cqw; bottom: .75cqw; height: 1.45cqw; }
+  .pin.person { width: 8.8cqw; padding: .5cqw .6cqw .5cqw; } .pin.person::after { width: 4.6cqw; height: 1.45cqw; top: -.7cqw; }
+  .pin.person .av { width: 6cqw; height: 4.4cqw; margin: .4cqw auto .3cqw; font-size: 2.1cqw; } .pin.person .t { font-size: 1.3cqw; } .pin.person .s { font-size: 1cqw; }
+  .pin.everyone { width: 10.4cqw; padding: 2.1cqw .6cqw .8cqw; } .pin.everyone .t { font-size: 1.75cqw; }
+  .pin.rule { width: 13.75cqw; padding-bottom: 2.5cqw; } .pin.rule .v { font-size: 1.05cqw; right: .6cqw; top: .5cqw; padding: 0 .5cqw; }
+  .pin.run { width: 10.2cqw; font-size: 1.05cqw; } .pin.run .t { font-size: 1.1cqw; }
+  .pin.table { width: 16cqw; padding-bottom: 2.5cqw; } .pin.table .t { font-size: 1.2cqw; }
+  .pin.note { width: 14.6cqw; font-size: 1.35cqw; padding-top: 1.55cqw; } .pin.note .t { font-size: 1.55cqw; }
+  .pin.question { width: 7.5cqw; font-size: 4.2cqw; padding: 1.25cqw .6cqw .2cqw; }
+  .pin.conn { width: 10.2cqw; } .pin.conn .t { font-size: 1.15cqw; }
+  .gtag { font-size: 1.35cqw; top: -2.3cqw; padding: .1cqw .8cqw; }
+  .scrawl { font-size: 3.5cqw; }
+  #lines { font-size: 1.45cqw; padding: 1.9cqw 2.3cqw; }
+  /* ---------- cold open (black card, white serif) ---------- */
+  #coldopen { position: absolute; inset: 0; z-index: 30; background: #000; color: #fff; display: none; flex-direction: column; align-items: center; justify-content: center;
+    font-family: "Times New Roman", Times, serif; text-align: center; cursor: pointer; }
+  #coldopen.show { display: flex; animation: fadein .35s ease-out; } #coldopen.out { animation: fadeout .5s ease-in forwards; }
+  #coldopen .time { font-size: 3.2cqw; letter-spacing: .02em; } #coldopen .day, #coldopen .city { font-size: 2.6cqw; margin-top: .6cqw; }
+  #coldopen .ep { font-size: 4cqw; letter-spacing: .01em; padding: 0 6cqw; line-height: 1.15; }
+  #coldopen .ep small { display: block; font-size: 1.6cqw; margin-top: 1.4cqw; opacity: .7; letter-spacing: .12em; text-transform: uppercase; font-family: var(--mono); }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } } @keyframes fadeout { from { opacity: 1; } to { opacity: 0; } }
+  .line.stage .who { color: var(--dim); } .line.stage .say { color: #c9c0b2; font-style: italic; }
   /* ---------- guidance: the wall shows you what to touch ---------- */
   #wall.mode-string .pin:not(.target):not(.source), #wall.mode-fold .pin:not(.foldable), #wall.mode-cut .pin { opacity: .55; filter: saturate(.4) brightness(.92); }
   #wall.mode-string .pin.target, #wall.mode-fold .pin.foldable { opacity: 1; filter: none; }
@@ -142,7 +170,7 @@
 
   #wallfoot { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; min-height: 34px; }
   #wallfoot .hint { color: var(--head); font-size: 13px; } #wallfoot .cnt { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--dim); }
-  #check { display: none; } #check.ready { animation: btnpulse 1.6s ease-in-out infinite; }
+  #check { display: none !important; } #next { animation: btnpulse 1.6s ease-in-out infinite; }
 
   /* ---------- console ---------- */
   #console { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -176,13 +204,14 @@
   #titlescreen .eyebrow { color: var(--yellow); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .18em; }
   .hide { display: none !important; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-  @media (max-width: 640px) { .pin { width: 92px; font-size: 10px; } .pin.rule { width: 104px; } .pin.table { width: 116px; } .pin.note { width: 108px; font-size: 11px; } .line .who { flex-basis: 70px; } }
+  @media (max-width: 640px) { .line .who { flex-basis: 70px; } }
 </style>
 </head>
 <body>
 <div id="titlescreen"><div class="inner panel"><div class="pbody" style="padding:22px">
   <div class="eyebrow">Hyperspell Arcade · Nº4 · Sep 2026</div>
   <h1><b>Red</b> String</h1>
+  <p style="color:var(--dim);font-family:'Times New Roman',serif;font-size:16px;margin:0 0 8px">“The Gang Builds a Permissions System”</p>
   <p>Ben and Manu, two calls, one corkboard. You are Ben at the wall, explaining who can see what.
   Every red string is a grant. Manu keeps asking the one question and taking issue with the
   answer, and the wall fills up until nobody can read it. Then you cut string for tables until three
@@ -203,10 +232,11 @@
     <div id="scrawls"></div>
     <div id="pins"></div>
     <div id="photo"></div>
+    <div id="coldopen"></div>
     <div id="lines"></div>
   </div></div>
   <div id="hintnote"><span class="ic" id="hint-ic">💬</span><span class="hint" id="hint"></span><span class="cnt" id="cnt"></span></div>
-  <div class="btnrow"><button class="primary" id="check">Check the wall</button></div>
+  <div class="btnrow"><button class="primary" id="check" hidden>Check the wall</button><button class="primary" id="next" hidden>Next →</button></div>
 
   <main id="console"></main>
 </div>
@@ -256,7 +286,6 @@ function renderPins() {
     else if (p.type === 'question') d.innerHTML = `?`;
     else d.innerHTML = `${p.v ? `<span class="v">${p.v}</span>` : ''}<div class="t">${p.label}</div>${p.sub ? `<div class="s">${p.sub}</div>` : ''}`;
     if (G.source === p.id) d.insertAdjacentHTML('beforeend', '<span class="gtag">from here</span>');
-    else if (isTarget && !G.sel.has(p.id) && G.sel.size === 0 && p.id === [...G.targets][0]) d.insertAdjacentHTML('beforeend', '<span class="gtag y">tap to string</span>');
     else if (isFold) d.insertAdjacentHTML('beforeend', '<span class="gtag y">tap to fold</span>');
   }
 }
@@ -288,24 +317,28 @@ function render() { renderPins(); renderStrings(); const n = liveStrings().lengt
 function put(html, tag = '') {
   const card = el(`<section class="card panel"><div class="pbody">${html}</div></section>`);
   if (tag) card.prepend(el(`<div class="phead">${tag}</div>`));
-  $('#console').prepend(card); return card;
+  $('#console').prepend(card);
+  // Every beat pins the scroll to the top: the wall stays in view, the newest card sits right under it.
+  requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }));
+  return card;
 }
 const BEN = t => `<div class="line you"><span class="who">Ben</span><span class="say">${t}</span></div>`;
 const MANU = t => `<div class="line co"><span class="who">Manu</span><span class="say">${t}</span></div>`;
-const LIFE = t => `<div class="line life"><span class="who">meanwhile</span><span class="say">${t}</span></div>`;
+const LIFE = t => `<div class="line stage"><span class="who">&nbsp;</span><span class="say">${t}</span></div>`;
 const NOTE = t => `<div class="line note"><span class="who"></span><span class="say">${t}</span></div>`;
 
 // ============================== interaction ==============================
 function setMode(mode, opts = {}) {
   G.mode = mode; G.source = opts.source || null; G.expect = opts.expect || null; G.sel = new Set(); G.tries = 0; G.locked = false;
   G.targets = (mode === 'string' || mode === 'cut') ? new Set(opts.expect || []) : (opts.targets ? new Set(opts.targets) : null);
-  if (mode === 'string') opts.hint = (opts.hint || '') + (G.targets.size ? ' Tap the glowing cards, then check.' : ' Nothing glows: nobody can see it. Press Check.');
-  if (mode === 'cut') opts.hint = (opts.hint || '') + ' Click the glowing strings, then check.';
+  if (mode === 'string') opts.hint = (opts.hint || '') + ' Tap every card that glows.';
+  if (mode === 'cut') opts.hint = (opts.hint || '') + ' Click every string that glows.';
   const icons = { string: '🧵', cut: '✂️', fold: '📌' };
   $('#hint').textContent = opts.hint || (mode ? '' : 'Continue in the conversation below.'); $('#hint-ic').textContent = icons[mode] || '💬';
   $('#hintnote').classList.toggle('quiet', !mode);
-  $('#check').style.display = (mode === 'string' || mode === 'cut') ? 'block' : 'none'; $('#cnt').textContent = '';
+  $('#cnt').textContent = '';
   $('#wall').className = mode ? `mode-${mode}` : ''; G.hover = null;
+  $('#next').hidden = !(mode === 'string' || mode === 'cut' || mode === 'fold');
   render();
 }
 function pinClick(id) {
@@ -313,10 +346,20 @@ function pinClick(id) {
   if (G.mode === 'string' && G.targets?.has(id)) {
     const ex = findStrings(G.source, id).filter(s => s.player);
     if (ex.length) { for (const s of ex) W.strings.delete(s.id); G.sel.delete(id); } else { string(G.source, id, 'grant', { player: true }); G.sel.add(id); }
-    $('#cnt').textContent = G.sel.size ? `${G.sel.size} strung` : 'nothing strung'; $('#check').classList.toggle('ready', true); render();
+    $('#cnt').textContent = G.sel.size ? `${G.sel.size} strung` : ''; render(); maybeComplete();
   } else if (G.mode === 'fold' && G.targets?.has(id)) { G.onFold(id); }
 }
-function stringClick(id) { if (G.locked) return; if (G.sel.has(id)) G.sel.delete(id); else G.sel.add(id); $('#cnt').textContent = `${G.sel.size} to cut`; $('#check').classList.toggle('ready', G.sel.size > 0); render(); }
+function stringClick(id) { if (G.locked) return; if (G.sel.has(id)) G.sel.delete(id); else G.sel.add(id); $('#cnt').textContent = G.sel.size ? `${G.sel.size} to cut` : ''; render(); maybeComplete(); }
+// The wall completes itself: when everything that glows has been touched, the beat resolves.
+function maybeComplete() { if (G.locked || !G.expect) return; if (!same(G.sel, new Set(G.expect))) return; G.locked = true; $('#next').hidden = true; setTimeout(() => G.onDone(true), 450); }
+// Next always continues. Anything still glowing gets resolved for you.
+$('#next').onclick = () => {
+  if (G.locked && G.mode !== 'fold') return;
+  $('#next').hidden = true;
+  if (G.mode === 'string') { for (const t of G.expect) if (!G.sel.has(t)) { string(G.source, t, 'grant', { player: true }); G.sel.add(t); } G.locked = true; render(); G.onDone(true); }
+  else if (G.mode === 'cut') { G.sel = new Set(G.expect); G.locked = true; render(); G.onDone(true); }
+  else if (G.mode === 'fold') { for (const id of [...G.targets]) G.onFold(id); }
+};
 function shakeAll(ids) { for (const id of ids) { const d = $(`.pin[data-id="${id}"]`); if (d) { d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); } } }
 function same(a, b) { return a.size === b.size && [...a].every(x => b.has(x)); }
 function award() {} function flunk() {}
@@ -339,6 +382,7 @@ const PEOPLE = [
 function setupWall() {
   for (const [id, n, r, c, x, y] of PEOPLE) pin(id, 'person', x, y, n, r, { color: c });
   pin('everyone', 'everyone', 880, 58, 'EVERYONE', 'the company');
+  pin('nobody', 'everyone', 700, 45, '∅ NOBODY', 'the null element');
   pin('thread', 'doc', 90, 150, 'Re: onboarding feedback', 'Gmail · Priya · personal');
   pin('comp', 'doc', 90, 260, 'Comp philosophy 2026', 'Drive · Sam · personal');
   pin('roadmap', 'doc', 90, 370, 'Q4 roadmap', 'Confluence · service account');
@@ -355,32 +399,42 @@ function setupWall() {
 
 // ============================== beats ==============================
 let beatIx = 0;
+// The show's cold open: time, day, place on black; then the episode title. Click to skip.
+function coldOpen(time, day, city, ep) {
+  const co = $('#coldopen'); let step = 0, timer;
+  const shots = [`<div class="time">${time}</div><div class="day">${day}</div><div class="city">${city}</div>`, `<div class="ep">${ep}</div>`];
+  if (!time) shots.shift();
+  const show = () => { if (step >= shots.length) { co.classList.add('out'); setTimeout(() => { co.className = ''; co.innerHTML = ''; }, 500); return; }
+    co.innerHTML = shots[step++]; co.className = 'show'; timer = setTimeout(show, 1700); };
+  co.onclick = () => { clearTimeout(timer); show(); }; show();
+}
 function next() { beatIx++; if (beatIx < BEATS.length) BEATS[beatIx](); else debrief(); }
 function nextBtn(card, label = 'Next →') { const b = el(`<div class="btnrow"><button class="primary">${label}</button></div>`); card.querySelector('.pbody').appendChild(b); b.querySelector('button').onclick = () => { b.querySelector('button').disabled = true; next(); }; }
 function act(n, date) { $('#hud-act').textContent = `Act ${n} · ${date}`; }
 
 const BEATS = [
   // ---------------- ACT 1 · Sep 1 ----------------
-  function b1() { act(1, 'Sep 1 · Filter and sharing overview'); setupWall(); scrawl('q', 'WHO CAN SEE THIS?', 700, 545, -3); setMode(null, { hint: 'Read the wall.' });
+  function b1() { act(1, 'Sep 1 · Filter and sharing overview'); setupWall(); coldOpen('2:58 PM', 'On a Tuesday', 'Over a video call', '“The Gang Builds a Permissions System”'); scrawl('q', 'WHO CAN SEE THIS?', 700, 545, -3); setMode(null, { hint: 'Read the wall.' });
     const c = put(BEN(`Okay, from an architecture perspective we have two concepts. Filters and sharing. Filters remove content from ever coming into Hyperspell. Sharing shares beyond the default audience, on a per-user basis.`) +
       MANU(`Correct. Sort of, right?`) +
       BEN(`For things ingested by personal integrations, and not service accounts or whatever we end up calling them, they are by default private to the user, and we can offer to the user that they should be shared with a different audience. Right now the only audience we support is the company.`) +
       NOTE(`The wall as you drew it: three marker notes in a row, two rules, four documents, the people, and one string that was already there: the service account's roadmap to EVERYONE.`), 'Act 1 · the wall fills up');
     nextBtn(c); },
   function b2() { setMode('string', { source: 'thread', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone'], expect: ['priya', 'everyone'],
-      hint: 'String Priya\'s thread to everyone who can see it, under the wall as drawn. Then check.' });
+      hint: 'Who can see Priya\'s thread, under the wall as drawn?' });
     put(BEN(`Right now, in theory, we have filters that drop things for everyone and sharing that shares things with everyone. If it matches a filter, it's dropped. If it doesn't match any filters, it is visible to the user. And if after that point it matches one of the sharing rules, it is shared. <b>It is one of those three states, in that order.</b>`) +
       NOTE(`Priya's thread matches “Customer feedback”. Click the people it reaches. The wall highlights what you can string to.`));
     G.onDone = ok => { settlePlayerStrings(); render();
       const c = put((ok ? `<p class="ok">Priya and EVERYONE. Two strings. That is the wall as drawn.</p>` : `<p class="no">Under this wall it reaches Priya and EVERYONE.</p>`) +
         MANU(`Uh, okay. <b>I take issue with that.</b>`) + BEN(`Good, let's go. I have a bit of a head start on you here.`)); nextBtn(c); }; },
-  function b3() { setMode('string', { source: 'comp', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone'], expect: [],
-      hint: 'Sam\'s comp doc matches the Compensation filter. Who sees it under the wall as drawn? Tap anyone who can. If nobody can, tap no one and press Check.' });
+  function b3() { setMode('string', { source: 'comp', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone'], expect: ['nobody'],
+      hint: 'Sam\'s comp doc matches the Compensation filter. Who sees it under the wall as drawn?' });
     put(MANU(`I don't actually know whether I would want the filters, like exclusion, to apply to personal content. The idea here being, well, <b>if I personally have access to my own salary information, then that can just be in there.</b>`) +
       BEN(`I think the original intent of the filters was: if we have one shared corpus that everyone is pulling from, these are the things we do not want in the shared corpus ever. Which is different than what got implemented, because what got implemented is: if it matches these filters, it does not enter Hyperspell, period.`) +
       NOTE(`So under the wall as drawn, who sees Sam's comp philosophy doc? String it. If the answer is nobody, string nothing and check.`));
     G.onDone = ok => { settlePlayerStrings();
-      const c = put((ok ? `<p class="ok">Nobody. Not even Sam. That is what DROPPED means on this wall.</p>` : `<p class="no">Under this wall, nobody. Not even Sam.</p>`) +
+      const c = put((ok ? `<p class="ok">∅. Nobody, not even Sam. That is what DROPPED means on this wall: an explicit nobody, the null element.</p>` : `<p class="no">Under this wall, nobody. Not even Sam.</p>`) +
+        NOTE(`There is a card on the wall for Nobody. Nobody is not a person. Nobody does not work here. Nobody has never connected an integration. Nobody gets the grant anyway. Manu will later name this the null element and put it on a slide about jesters.`) +
         MANU(`Which is fine. I'm okay with that. But the question of whether ingestion filters only apply to shared content or also personal content…`) +
         BEN(`Because it is an ingestion filter, the content does not get ingested at all. Happy to pivot on that. That's why we're looking at it.`) +
         MANU(`<b>Ingestion filters only apply to shared content.</b> There's some benefits. One is cost.`) +
@@ -398,7 +452,7 @@ const BEATS = [
     const c = put(BEN(`It gets complicated when you're talking about things that are incremental. One of the interesting things we're running into is realizing yesterday that <b>the filters apply to Slack channels in total.</b>`) +
       MANU(`Which is a different question too.`) +
       BEN(`It gets an order of magnitude more complicated if we're trying to do it at the chunk level. However, it seems like we might need to, or do some two-pass thing: if a chunk matches, go evaluate the document and see if it should be excluded on the merits.`) +
-      NOTE(`Thirteen chunks of a channel, one mention of medical leave, one string to DROPPED for the whole channel.`)); nextBtn(c); },
+      NOTE(`The channel never stops. It just keeps coming and coming and coming. Chunk 13 arrives. Chunk 13 is about someone's medical leave. Thirteen chunks, one mention, one string to DROPPED for the whole channel.`)); nextBtn(c); },
   function b5() { setMode(null, { hint: 'Press Preview.' });
     scrawl('v', 'THE VORTEX', 700, 440, 6, true);
     const c = put(MANU(`What does preview do?`) + BEN(`So preview starts a Temporal run. Let me back up for a second. <b>The hardest part of all of this has been managing state, and I want to simplify that.</b>`) +
@@ -406,7 +460,7 @@ const BEATS = [
       MANU(`That means the result of the run is not actually persisted in our database, but only exists on Temporal right now?`) + BEN(`Yes.`));
     const b = el(`<div class="btnrow"><button class="primary">▶ Preview</button></div>`); c.querySelector('.pbody').appendChild(b);
     b.querySelector('button').onclick = () => { b.querySelector('button').disabled = true;
-      pin('run1', 'run', 520, 330, 'RUN 14:02', 'filters as of 14:02 · 73,000 scanned'); for (const d of ['thread', 'comp', 'roadmap', 'chan']) string('run1', d, 'run'); render();
+      pin('run1', 'run', 520, 330, 'RUN 14:02', 'filters as of 14:02 · 73,000 scanned · 0 meaning'); for (const d of ['thread', 'comp', 'roadmap', 'chan']) string('run1', d, 'run'); render();
       const c2 = put(NOTE(`One receipt on the wall, four strings to the documents it matched. Then what happened last night, which is totally normal:`) +
         BEN(`I write a filter, and then I adjust the filter, and then I add another filter, and then I add another filter, and then I delete the filter, and at some point I click the preview button and results are starting to come in…`));
       const b2 = el(`<div class="btnrow"><button class="primary">Adjust the filter</button></div>`); c2.querySelector('.pbody').appendChild(b2);
@@ -448,17 +502,18 @@ const BEATS = [
       else { b.classList.add('wrongpick'); b.disabled = true; if (false) { render();
         const c2 = put(`<p class="no">Team 3. (Team 1 ∪ All) ∩ Team 3, in any order.</p>` + BEN(`<b>Are we gonna need GPUs for this? Because I'm seeing a matrix.</b>`) + MANU(`It's Boolean logic. <b>The order in the end doesn't matter.</b>`)); nextBtn(c2); } } }); },
   function b8() { setMode(null, { hint: 'Take the photograph.' });
-    const c = put(LIFE(`Manu finds a stylus in his backpack that is not his. “I stole it from somewhere. One of my Uber drivers, actually.” It is a MetaPen, not an Apple Pencil. It has a USB-C port. “It's a stylus with a flashlight.”`) +
-      LIFE(`“Let's go grab coffee and continue to have the conversation.”`) +
-      NOTE(`This is the wall at the end of the first call. Take the photograph.`));
+    const c = put(LIFE(`Manu produces a stylus that is not his. “I stole it from somewhere. One of my Uber drivers, actually.” It is not an Apple Pencil. It is a MetaPen. It has a USB-C port. Ben: “It's a stylus with a flashlight.” Nobody draws anything with it.`) +
+      LIFE(`Coffee is proposed. Coffee is obtained. The conversation continues. The wall does not get any less red.`) +
+      NOTE(`This is the wall at the end of the first call. Ben is standing in front of it. Take the photograph.`));
     const b = el(`<div class="btnrow"><button class="primary">📸 Photograph the wall</button></div>`); c.querySelector('.pbody').appendChild(b);
     b.querySelector('button').onclick = () => { b.querySelector('button').disabled = true; const ph = $('#photo'); ph.classList.remove('flash'); void ph.offsetWidth; ph.classList.add('flash');
       W.photoStrings = liveStrings().length; W.photoPins = [...W.pins.values()].filter(p => !p.gone).length;
       const c2 = put(`<div class="metric">🧵 <b>${W.photoStrings}</b> strings</div><div class="metric">📌 <b>${W.photoPins}</b> pins</div><div class="metric">🧾 <b>${[...W.pins.values()].filter(p => p.type === 'run').length}</b> receipts that mean nothing</div>` +
+        LIFE(`Ben, explaining. Manu, listening. The wall, red.`) +
         NOTE(`Every string on this wall is a grant somebody would have to explain. Most of them point at a Temporal run whose history will age out. Tomorrow you cut them.`), 'Act 1 · the photograph'); nextBtn(c2, 'Sep 2 →'); }; },
 
   // ---------------- ACT 2 · Sep 2 ----------------
-  function b9() { act(2, 'Sep 2 · Document access and grant computation'); unscrawl('v'); scrawl('nr', 'NO RETROACTIVE ONES', 640, 560, 3, true);
+  function b9() { act(2, 'Sep 2 · Document access and grant computation'); coldOpen('5:38 PM', 'On a Wednesday', 'Over a video call', '“The Gang Discovers the Join Table”'); unscrawl('v'); scrawl('nr', 'NO RETROACTIVE ONES', 640, 560, 3, true);
     // reset the model notes; pin the grants table
     for (const id of ['n1', 'n2', 'n3', 'n4', 'ref']) unpin(id);
     pin('grants', 'table', 470, 250, 'grants', 'document · audience · reason'); string('grants', 'everyone', 'version');
@@ -473,7 +528,7 @@ const BEATS = [
     const b = el(`<div class="btnrow"><button class="primary">✂️ Pick up the scissors</button></div>`); c.querySelector('.pbody').appendChild(b);
     b.querySelector('button').onclick = () => { b.querySelector('button').disabled = true;
       const cuttable = [...W.strings.values()].filter(s => s.kind === 'grant' && !s.cut).map(s => s.id);
-      setMode('cut', { targets: cuttable, expect: defaults, hint: 'Click the red strings a default-grant row can recompute. Leave the manual one. Then check.' });
+      setMode('cut', { targets: cuttable, expect: defaults, hint: 'Cut the red strings a default-grant row can recompute. The manual one stays.' });
       G.onDone = ok => { commitCuts(); render();
         const c2 = put((ok ? `<p class="ok">Every default string is gone. The manual one stays: apply never touches a manual grant.</p>` : `<p class="no">The default strings go. The manual string from June to the roadmap stays; nothing recomputes a human's click.</p>`) +
           BEN(`The only tricky bit is that right now we don't actually have a way to determine which connection a document came from, and what the default grants should be. We just need to start storing that.`) + MANU(`I'd like to, anyway.`)); nextBtn(c2); }; }; },
@@ -491,13 +546,13 @@ const BEATS = [
     ch.querySelectorAll('button').forEach(b => b.onclick = () => { tries++; if (b.dataset.o === '1') { b.classList.add('rightpick'); ch.querySelectorAll('button').forEach(x => x.disabled = true); award(tries === 1); land(true); }
       else { b.classList.add('wrongpick'); b.disabled = true; } }); },
   function b11() { const cab = findStrings('c_sam', 'memo').map(s => s.id);
-    setMode('cut', { targets: cab, expect: cab, hint: 'Sam leaves the company. Cut his cable to the memo, then check.' });
+    setMode('cut', { targets: cab, expect: cab, hint: 'Sam leaves the company. Cut his cable to the memo.' });
     put(BEN(`Which is good, because that solves a different problem: how do we easily say, if the original owner has left the company but other people still have grants? <b>It's not the owner grant and the additional grants. It is: this document has come in equally from all of these connections.</b>`) +
       NOTE(`Sam leaves. Cut his cable.`));
     G.onDone = ok => { commitCuts(); render();
       const c = put(`<p class="ok">The memo is still on the wall. Priya's cable holds it.</p>` + BEN(`<b>If there are any connections remaining, we leave the document.</b>`) + MANU(`Yeah.`)); nextBtn(c); }; },
   function b12() { const cab = findStrings('c_priya', 'memo').map(s => s.id);
-    setMode('cut', { targets: cab, expect: cab, hint: 'Now Priya leaves too. Cut the last cable, then check.' });
+    setMode('cut', { targets: cab, expect: cab, hint: 'Now Priya leaves too. Cut the last cable.' });
     put(BEN(`And we still need to define what behavior occurs if there are no connections left for a document. Because they've all been removed.`) + NOTE(`Cut Priya's cable.`));
     G.onDone = () => { G.locked = true;
       const c = put(NOTE(`No cable left. What happens to the rows?`));
@@ -513,7 +568,7 @@ const BEATS = [
   function b13() {
     pin('matches', 'table', 470, 400, 'rule_matches', 'document · chunk · rule version · confidence · decision · effect'); pin('versions', 'table', 640, 400, 'rule_versions', 'append-only · id = the version');
     const runs = [...W.strings.values()].filter(s => s.kind === 'run' && !s.cut).map(s => s.id);
-    setMode('cut', { targets: runs, expect: runs, hint: 'Cut every string that goes to a receipt. All of them. Then check.' });
+    setMode('cut', { targets: runs, expect: runs, hint: 'Cut every string that goes to a receipt. All of them.' });
     put(MANU(`Whenever we apply a rule to a document and realize it matches, we need a table that says: here's the document, here's the rule ID, and that rule ID is versioned. So if you made a new version of the rule, we always know which version got applied.`) +
       BEN(`<b>We're back to the event sourcing.</b>`) + MANU(`Basically.`) + BEN(`Is this a property of a document that lives in the documents table, or do we now have a separate table of rule applications?`) +
       MANU(`It needs to be a separate table, because multiple rules can apply to something. A sharing rule applies, and then we realize an exclusion rule also applies, so you don't share. <b>You want to keep track of both.</b>`) +
@@ -526,11 +581,11 @@ const BEATS = [
         BEN(`I'm ending up back at event sourcing. You're trying to record a series of stateful operations: the document matched this version of this filter, and separately, we applied the result of that match. And when the label is edited, you would forever have a match that is unapplied because it is superseded by the new version. <b>That is brutal, isn't it?</b>`) +
         MANU(`Just because something can be modeled as a sequence of idempotent atomic operations doesn't mean you should.`)); nextBtn(c); }; },
   function b14() { setMode(null, { hint: '' });
-    const c = put(LIFE(`Both of you reach for something to draw with. Freeform on the iPad this time.`) +
+    const c = put(LIFE(`Both reach for something to draw with. Freeform on the iPad this time. The MetaPen is not mentioned again.`) +
       NOTE(`🧵 ${liveStrings().length} strings on the wall, down from ${W.photoStrings}. The tables did that. One more pass.`)); nextBtn(c, 'Sep 3 →'); },
 
   // ---------------- ACT 3 · Sep 3 ----------------
-  function b15() { act(3, 'Sep 3 · three lines'); unscrawl('nr'); unscrawl('q'); scrawl('t3', 'MAKE THEM RULES', 300, 560, -5);
+  function b15() { act(3, 'Sep 3 · three lines'); coldOpen('Late', 'On a Thursday', 'In a Notion doc', '“The Gang Gets Set Theory”'); unscrawl('nr'); unscrawl('q'); scrawl('t3', 'MAKE THEM RULES', 300, 560, -5);
     pin('n_owner', 'note', 300, 130, 'PERSONAL STAYS WITH ITS OWNER', 'the special case'); pin('n_bot', 'note', 470, 130, 'SERVICE ACCOUNT → EVERYONE', 'the other special case');
     setMode('fold', { targets: ['n_owner', 'n_bot'], hint: 'Two special cases are still hand-written on the wall. Click each one to fold it into a rule.' });
     put(BEN(`The default grants are a special case the algebra carries by hand: company from an app-scope connection, owner from a user-scope connection, one of them filterable and one not. Every one of those facts is a predicate over provenance. <b>So make them rules.</b>`) +
@@ -540,12 +595,12 @@ const BEATS = [
       if (id === 'n_bot') { p.type = 'rule'; p.label = 'Company connection default'; p.sub = 'connection.id = X → company'; p.v = 'rule'; p.cls = ''; }
       else { p.type = 'rule'; p.label = 'Filter keeps the connectors'; p.sub = 'a filter\'s audience = the people who connected the content'; p.v = 'rule'; p.cls = 'filter'; }
       G.targets.delete(id); render(); done++;
-      if (done === 2) { award(true);
+      if (done === 2) { award(true); $('#next').hidden = true;
         const c = put(`<p class="ok">Two notes became two rules. Every connection carries a default sharing rule: <span class="mono">connection.id = this connection</span>, audience the company for a service account, the connecting user for a personal one. A filter's audience is the people who connected the content, derived at apply, so it takes service-account content to nobody and leaves personal content with its owner, with no special case anywhere.</p>` +
           BEN(`No rule or code path knows what an “owner” or “ingester” is. The connection's rule names the person.`)); nextBtn(c); } }; },
   function b16() { setMode('fold', { targets: ['manual'], hint: 'One note left. Try to fold MANUAL into a rule.' });
     put(NOTE(`One hand-written note is still on the wall. Click it.`));
-    G.onFold = id => { shakeAll([id]); G.targets.delete(id); render(); award(true);
+    G.onFold = id => { shakeAll([id]); G.targets.delete(id); render(); award(true); $('#next').hidden = true;
       const c = put(`<p class="mid">The wall refuses.</p>` + BEN(`Manual stays a grant reason, not a rule. <b>A rule needs a matcher, and “someone clicked Share” is not one.</b> Apply rewrites rule grants and never touches a manual row. It is the one thing outside the algebra.`) +
         MANU(`Being able as a human to share documents and then not be surprised afterwards is the design goal.`)); nextBtn(c, 'Read the wall →'); }; },
   function b17() { setMode(null, { hint: '' });
@@ -556,13 +611,13 @@ const BEATS = [
       `<div class="metric">🧵 <b>${W.photoStrings || 0}</b> at the photograph</div><div class="metric">🧵 <b>${liveStrings().length}</b> now</div><div class="metric">✂️ <b>${W.cuts}</b> cuts</div><div class="metric">📌 <b>${W.down}</b> pins down</div>`); nextBtn(c, 'Sep 4 →'); },
 
   // ---------------- CODA · Sep 4 ----------------
-  function b18() { act(3, 'Sep 4 · one more wrinkle'); $('#lines').classList.remove('show');
+  function b18() { act(3, 'Sep 4 · one more wrinkle'); coldOpen('The next day', 'On a Friday', 'Over a video call', '“Ben Is Back at iptables”'); $('#lines').classList.remove('show');
     pin('t2', 'person', 760, 190, 'Team 2', 'eng', { color: '#58a' }); W.pins.get('t2').gone = false;
     pin('wr_doc', 'doc', 90, 560, 'Incident retro', 'Notion · Lena · personal');
     pin('wr_share', 'rule', 470, 470, 'Incidents', 'sharing → Team 2', { v: 'v1' }); string('wr_share', 'wr_doc', 'version'); string('wr_share', 't2', 'version');
     pin('wr_filter', 'rule', 640, 470, 'Exclusion', 'filter · audience ∅', { v: 'v1', cls: 'filter' }); string('wr_filter', 'wr_doc', 'version');
-    setMode('string', { source: 'wr_doc', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone', 't2'], expect: ['lena'],
-      hint: 'String Lena\'s retro under the three lines as drawn, then check.' });
+    setMode('string', { source: 'wr_doc', targets: ['priya', 'sam', 'omar', 'lena', 'june', 'everyone', 't2', 'nobody'], expect: ['lena'],
+      hint: 'Who can see Lena\'s retro, under the three lines as drawn?' });
     put(BEN(`Okay, go ahead. One more wrinkle.`) + BEN(`Did you figure out this wrinkle as you were building the Insane Clown Posse slide?`) + MANU(`Yep.`) + BEN(`Oh my God.`) +
       MANU(`So let's say we have a document that comes through a personal connection, from user 1. And it also has sharing rules that match, that will distribute it to Team 2. So now user 1, and 2, 3, and 4 all have access to it, because it was shared with Team 2.`) +
       MANU(`The exclusion filters right now, the semantics are <b>nobody except those teams</b>. So right now the exclusion filters have as their audience the null element. Which is an explicit nobody grant, useful to distinguish “this hasn't been granted” from “nobody can see it.” That works perfectly fine for something that comes in through a shared integration.`) +
@@ -616,9 +671,8 @@ const BEATS = [
 
 // ============================== debrief ==============================
 function debrief() {
-  $('#hud-act').textContent = 'Debrief'; setMode(null, { hint: '' });
+  $('#hud-act').textContent = 'Debrief'; setMode(null, { hint: '' }); coldOpen('', '', '', 'RED STRING<small>Hyperspell Arcade · filmed in front of a live Slack channel</small>');
   const card = `RED STRING 🧵\nTwo calls, one wall.\n🧵 ${W.photoStrings || 0} → ${liveStrings().length} strings · ✂️ ${W.cuts} cuts · 📌 ${W.down} pins down\nhyperspell.github.io/arcade`;
-  const best = +(localStorage.getItem('red-string-best') || 0); if (W.cuts > best) localStorage.setItem('red-string-best', W.cuts);
   const c = put(`<pre class="sharecard">${card}</pre><div class="btnrow"><button class="primary" data-c>Copy the card</button><button data-a>Play again</button></div><p class="warn">Built by the <a href="https://hyperspell.com">Hyperspell</a> team.</p>`, 'Share your wall');
   put(`<ul class="log" style="margin-top:0">
     <li>Sharing rules widen and are sticky: pausing or deleting one leaves its grants standing. Filter rules narrow and are live: deleting one lets content re-widen at the next apply, no model call.</li>
@@ -635,7 +689,6 @@ function debrief() {
 }
 
 // ============================== boot ==============================
-const bestV = localStorage.getItem('red-string-best'); if (bestV) $('#best').textContent = 'BEST WALL: ' + bestV + ' cuts';
 $('#start').onclick = () => { $('#titlescreen').remove(); BEATS[0](); };
 </script>
 </body>
