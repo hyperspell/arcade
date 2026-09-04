@@ -109,6 +109,7 @@
     background: #d6202a; padding: 1px 8px; border-radius: 2px; box-shadow: 0 2px 4px rgba(0,0,0,.5); transform: rotate(-3deg); animation: bob 1s ease-in-out infinite alternate; }
   .gtag.y { background: var(--yellow); color: #2a2008; top: auto; bottom: -22px; animation-name: bobdown; }
   @keyframes bobdown { from { translate: -50% 0; } to { translate: -50% 5px; } }
+  #wall.mode-set .pin:not(.inset) { opacity: .5; filter: saturate(.4); } #wall.mode-set .pin.inset { box-shadow: 0 0 0 3px var(--green), 0 0 26px 8px rgba(99,201,140,.85), 1px 3px 7px rgba(0,0,0,.4); }
   @keyframes glow { from { box-shadow: 0 0 0 3px var(--yellow), 0 0 14px 3px rgba(242,200,75,.5), 1px 3px 7px rgba(0,0,0,.4); } to { box-shadow: 0 0 0 3px var(--yellow), 0 0 30px 10px rgba(242,200,75,.95), 1px 3px 7px rgba(0,0,0,.4); } }
   @keyframes wobble { 0%,100% { rotate: -1.5deg; } 50% { rotate: 1.5deg; } }
   @keyframes bob { from { translate: -50% 0; } to { translate: -50% -5px; } }
@@ -580,7 +581,37 @@ const BEATS = [
         BEN(`Fuck. This feels like the part where we just explain a list of all the edge cases to Claude and tell it to write the algebra.`) +
         MANU(`Yeah, I did. I wrote everything down and asked what the prior art is. It said lattice. And then I had to explain: <b>this is not a lattice, it's a poset.</b>`) +
         BEN(`At the next offsite we're going to be making possets. Hyperspell possets.`) +
-        MANU(`Okay. Maybe this needs more thinking.`) + BEN(`<b>Yes. Hence the wall.</b>`)); nextBtn(c, 'Debrief →'); }; },
+        MANU(`Okay. Maybe this needs more thinking.`) + BEN(`<b>Yes. Hence the wall.</b>`)); nextBtn(c, 'Keep going →'); }; },
+
+  // ---------------- CODA II · the ordered list ----------------
+  function b19() { act(3, 'Sep 4 · maybe the order matters'); setMode(null, { hint: 'Step through the rules in the conversation below. The wall shows the set after each step.' });
+    const STEPS = [
+      ['Shared-connection defaults', 'Lena\'s retro came through a personal connection, so this step adds nobody.', []],
+      ['Sharing rules', '“Incidents” matched. Audience Team 2. The set is Team 2.', ['t2']],
+      ['Filters', 'The exclusion filter matched. Audience ∅. The set is nobody.', []],
+      ['Personal-connection defaults', 'Lena connected it. Applied after the filters, so she gets it back.', ['lena']],
+      ['Manual grants', 'None on this document. The set stays Lena.', ['lena']],
+    ];
+    const c = put(MANU(`So you're saying maybe the order matters.`) +
+      BEN(`The order matters because the manual grants need to be applied, and enforced, after filters. Well, wait. I know I just said the defaults apply, then the rules, then the manual grants, but I think that's already wrong. Our current model was that the defaults and the rules apply at the same time. They should be idempotent. And then the manual grants apply.`) +
+      MANU(`If we simply treat a default grant from personal connections as a manual grant… that feels icky. This is a decision we have to make here. <b>If you get something from a personal connection, do you always have access to it, no matter what the filters say?</b>`) +
+      BEN(`Yep. <b>I'm back at iptables.</b>`) + MANU(`If so, then this is essentially a manual grant to you. Because none of the other rules apply.`) +
+      BEN(`I continue to feel like, in order to represent the actual complexity we are trying to model, we will need something that is an <b>ordered list of rules</b> instead of an orderless list. And there's a decision about short-circuit evaluation: if there's a manual grant for this user and this user is the ingester, we have nothing left to compute.`) +
+      MANU(`But we don't compute access per user.`) + BEN(`No. Per document.`) +
+      NOTE(`So you read the wall top to bottom, as an ordered list, for Lena's retro. Press each rule. The wall shows the set after that step.`), 'Coda · the ordered list');
+    const box = el(`<div class="choices"></div>`); c.querySelector('.pbody').appendChild(box);
+    let k = 0; const btn = el(`<button class="primary">▶ Step 1 · ${STEPS[0][0]}</button>`); box.appendChild(btn);
+    const showSet = ids => { for (const d of document.querySelectorAll('.pin')) d.classList.toggle('inset', ids.includes(d.dataset.id)); $('#wall').className = 'mode-set'; };
+    btn.onclick = () => { const [name, why, set] = STEPS[k]; showSet(set);
+      $('#hint').textContent = `After step ${k + 1} (${name}): ${set.length ? set.map(i => W.pins.get(i).label).join(', ') : 'nobody'}.`;
+      box.insertAdjacentHTML('beforebegin', NOTE(`<b>${k + 1}. ${name}.</b> ${why}`));
+      k++; if (k < STEPS.length) btn.textContent = `▶ Step ${k + 1} · ${STEPS[k][0]}`; else { btn.disabled = true; award(true); render();
+        const c2 = put(BEN(`Shared connection, apply first. Then the sharing rules. Then the filters. Then the default rules on personal connections. Then the manual grants. <b>This is functionally where I think we've landed.</b> But there are quite a few ordering-based decisions we are counting on.`) +
+          MANU(`Kind of. But mathematically we may be able to collapse some of those. I think into two steps. One is all sharing rules, all filtering rules, and all rules that come from shared connections. Then the rest.`) +
+          NOTE(`Two steps: ( shared defaults ∪ sharing rules ) ∩ filters, then ∪ personal defaults ∪ manual. Same answer for Lena's retro. It is the Sep 2 algebra with the personal default moved outside the intersection.`) +
+          BEN(`I don't disagree that we may be able to collapse this to two steps. What I come back to is that you and I are having a great deal of difficulty holding all of the permutations of this in our heads at one time. There must be some exercise we can work through: <b>here are all the different states we need to represent, what is the simplest way we can do this?</b> Just because we can reduce it to two steps doesn't mean it's easier to reason about. There is merit to the ordered list, because then you go step by step: here's the set at this evaluation, now the next rule, evaluate this set. It's an iterative process.`) +
+          MANU(`I need to make my slide.`) +
+          NOTE(`That exercise is this game. The wall stays up.`)); nextBtn(c2, 'Debrief →'); } }; },
 ];
 
 // ============================== debrief ==============================
@@ -598,7 +629,7 @@ function debrief() {
     <li>A document that matches a sharing rule and a filter rule is blocked by the filter and never reaches the Inbox. Counts keep both.</li>
     <li>Opt-in gates evaluation: nobody's private content is judged against a sharing rule they did not enable. Forward-only; existing content needs a backfill you pay for.</li>
     <li>A long Slack channel converges to filtered. Chunk-level grants are named as orthogonal work.</li>
-    <li>Still open: what a document with no active connections keeps. And the Sep 4 wrinkle: a personal document shared to a team that also hits a filter. Three readings of the filter's audience give three answers. Both question marks stay on the wall.</li>
+    <li>Still open: what a document with no active connections keeps. And the Sep 4 wrinkle: a personal document shared to a team that also hits a filter. Three readings of the filter's audience give three answers. Both question marks stay on the wall. The ordered list of rules versus two set-algebra steps is still being argued; the game lets you step through both.</li>
   </ul>`, 'What the wall settled and what it did not');
   put(`<div class="metric">${title}</div><p>The wall you cut is the design as of Sep 3, plus the wrinkle from Sep 4: provenance rows, rule versions, matches, opt-ins, a fresh grants table, and an audience that is three lines of set algebra. The surfaces shipped this week; the computed-grants cutover and the scorer's confidence bands are coming. Nothing here claims they are live.</p>`, 'Debrief · where this actually stands');
   c.querySelector('[data-c]').onclick = function () { navigator.clipboard.writeText(card).then(() => { this.textContent = 'Copied ✓'; }).catch(() => { this.textContent = 'Select & copy above'; }); };
