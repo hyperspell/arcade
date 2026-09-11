@@ -10,12 +10,14 @@ Small games about big infrastructure, by the [Hyperspell](https://hyperspell.com
 | [**Ingestion Inspector**](https://hyperspell.github.io/arcade/ingestion-inspector/) | Checkpoint bureaucracy at the Ministry of Ingestion. You play the LLM content classifier guarding what enters a company's memory: stamp documents against the filters, survive the fail-open jump scare, run the two-key dry-run → apply sequence, and answer to the coworker whose charity fun run you soft-deleted. Comes with a [recruitment poster](https://hyperspell.github.io/arcade/ingestion-inspector/poster.html). |
 | [**The Sharing Machine**](https://hyperspell.github.io/arcade/sharing-machine/) | A Factorio-flavored factory about the opposite problem: what a company's memory shares back out. Place an inclusion gate on the belt (there is no slot upstream of ingestion), watch an enforcing drop filter beat your share rule — and a disarmed one protect nothing — then fix a wrong drop the only way that works: refine the filter. Ends by calibrating a scored gate with an ask-a-human band and teaching it until it goes quiet. |
 | [**Red String**](https://hyperspell.github.io/arcade/red-string/) | A corkboard drama about designing a permissions model with your cofounder, with no clock. Every red string is a grant. Across two real calls the wall fills up: three ordered states, a salary doc that breaks them, a Preview button that starts a Temporal run per edit, per-user run state, Team 1/2/3 and rules 1 through 5, and the question "are we gonna need GPUs for this?" Then you cut string for tables (provenance rows, rule versions, matches) until the model is three lines of set algebra, with one question mark left on the wall on purpose. Dialogue is verbatim from the calls, trimmed and unnamed. |
+| [**Granted**](https://hyperspell.github.io/arcade/granted/) | A six-puzzle permissions patchboard about the Content Rules work merged September 8–11. Connect documents to their readers with Fetched, Rule, and Manual cables. Preserve multiple owners, distinguish an Inbox match from a Share, remove only the grants a live filter owns, and keep the history an archived sharing rule left behind. Untimed, keyboard and touch friendly, with hints, undo, and a local best score. |
 
 ## Honesty clause
 
 The incidents, knobs, dates, spec rules, and percentages in these games are real. The dollar
 amounts and traffic volumes have been replaced with deliberately outrageous ones. All documents
-in Ingestion Inspector, The Sharing Machine, and Red String are fiction, and so are the people on Red String's wall.
+in Ingestion Inspector, The Sharing Machine, Red String, and Granted are fiction, and so are the people on Red String's wall and Granted's patchboard.
+Granted models merged code; it does not assert a universal production rollout.
 
 ## Tech
 
