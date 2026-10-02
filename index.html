@@ -104,6 +104,19 @@
   .grviz .reasons span:nth-child(1){color:#9BD9FF;}
   .grviz .reasons span:nth-child(2){color:#D4F46B;}
   .grviz .reasons span:nth-child(3){color:#D8ACFF;}
+  /* Block & Roll cabinet: a Jenga tower, one red block, and the wrecking ball coming for it */
+  .cab.br .meta,.cab.br .cta{color:#D8FF3A;}
+  .brviz{height:96px;position:relative;overflow:hidden;background:linear-gradient(180deg,#14261F,#1F4436);}
+  .brviz .tower{position:absolute;left:56%;bottom:0;width:68px;display:flex;flex-direction:column-reverse;gap:2px;}
+  .brviz .tower i{display:block;height:12px;border-radius:2px;background:#ECD5A6;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18);}
+  .brviz .tower i:nth-child(even){background:repeating-linear-gradient(90deg,#ECD5A6 0 21px,#B89C6A 21px 23px);}
+  .brviz .tower i.hr{background:#D9573C;transform:translateX(30px);}
+  .brviz .chain{position:absolute;left:26%;top:-6px;width:3px;height:46px;background:#8D949B;transform-origin:top center;transform:rotate(32deg);}
+  .brviz .ball{position:absolute;left:calc(26% - 50px);top:22px;width:46px;height:46px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#7A8087,#2B2E33 62%);box-shadow:0 0 0 3px #D9573C inset,0 4px 10px rgba(0,0,0,.5);}
+  .brviz .rubble i{position:absolute;bottom:4px;width:30px;height:9px;border-radius:2px;background:#2A2C2F;}
+  .brviz .say{position:absolute;right:14px;top:12px;background:#fff;color:#111;border:2px solid #111;border-radius:10px;
+    padding:2px 8px;font:700 10.5px ui-monospace,Menlo,Consolas,monospace;rotate:3deg;}
   /* ---------- footer ---------- */
   footer{margin-top:56px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--dim);line-height:2;}
   footer a{color:var(--text);text-decoration:none;border-bottom:1px solid #3A4356;}
@@ -210,6 +223,23 @@
         a grant, and cut only the cables a filter owns. Six small puzzles about a week of
         Content Rules work. <b>Every cable needs a reason.</b></p>
         <div class="cta">PATCH ME IN ▸</div>
+      </div>
+    </a>
+    <a class="cab br" href="block-and-roll/">
+      <div class="brviz" aria-hidden="true">
+        <div class="chain"></div><div class="ball"></div>
+        <div class="rubble"><i style="left:8%;rotate:-12deg"></i><i style="left:15%;rotate:8deg;bottom:9px"></i><i style="left:36%;rotate:20deg"></i></div>
+        <div class="tower"><i></i><i></i><i></i><i class="hr"></i><i></i><i></i></div>
+        <div class="say">I WAS ABOUT TACOS</div>
+      </div>
+      <div class="cabbody">
+        <div class="meta">Physics Jenga, wrecking ball included · ~5 min</div>
+        <h2>Block &amp; Roll</h2>
+        <p class="pitch">One comp band in a 54-message Slack channel, and the document-grain filter takes
+        <b>the whole tower</b>. Pull the red block, watch the wrecking ball, hear the messages scream.
+        Then do it at <b>chunk grain</b>: one block out, 53 survive, Dana's raise stays home, and
+        bring-back raises the rest with <b>no new model calls</b>. Real percentages, outrageous counts. Sound on.</p>
+        <div class="cta">PULL THE RIGHT BLOCK ▸</div>
       </div>
     </a>
   </div>
